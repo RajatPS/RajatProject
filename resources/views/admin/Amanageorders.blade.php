@@ -351,19 +351,80 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 15px rgba(255, 107, 157, 0.4);
         }
+        
+        .back-btn {
+            width: 15%;
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background-color: var(--dark-reddish-pink);
+            color: var(--light-text-color);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .back-btn:hover {
+            background-color: var(--reddish-pink-color);
+        }
+
+        .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.header-container h1 {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.2rem;
+    margin-bottom: 5px;
+}
+
+.header-container p {
+    color: var(--light-text-color); 
+    margin-bottom: 0;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--dark-reddish-pink);
+    color: var(--light-text-color);
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    height: fit-content;
+}
+
+.back-btn:hover {
+    background-color: var(--reddish-pink-color);
+}
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <header>
-            <h1><i class="fas fa-box-open"></i> Manage Orders</h1>
-            <p>Overview of all current orders placed by users.</p>
-        </header>
+            <div class="header-container">
+                <div>
+                    <h1><i class="fas fa-box-open"></i> Manage Orders</h1>
+                    <p>Overview of all current orders placed by users.</p>
+                </div>
+                
+                <a href="javascript:history.back()" class="back-btn">
+                    Back to Dashboard 
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
 
-        <div class="search-section">
-            <input type="text" id="orderSearch" placeholder="Search orders by Username, ID, City, Status, etc..." onkeyup="filterTable()">
-            <i class="fas fa-search search-icon"></i>
-        </div>
+            <div class="search-section">
+                <input type="text" id="orderSearch" placeholder="Search orders by Username, ID, City, Status, etc..." onkeyup="filterTable()">
+                <i class="fas fa-search search-icon"></i>
+            </div>
 
         <div class="table-wrapper">
             <table class="orders-table" id="ordersTable">

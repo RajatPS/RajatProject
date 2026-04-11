@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller; 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,15 +11,29 @@ use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Twilio\Rest\Client;
 
-use function Symfony\Component\String\s;
-
 class SellerC extends Controller
 {
+    public function sellerLogout(Request $request){
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/seller/sellerLogin');
+    }
+
+    public function sellerDashboard(){
+        $user = Auth::user();
+        $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();  //better version thsn previous ones
+        $todayOrders = $userOrders->where('created_at', '>=', now()->startOfDay())->count();
+        $pendingPayout = Order::whereHas('product', function ($query) {
+            $query->where('seller_id', Auth::id());
+            })->where('status', 'delivered')->where('delivered_at', '>=', now()->subDays(3))->sum('totalAmount');
+        return view('seller.sellerDashboard', compact('userOrders', 'todayOrders', 'pendingPayout'));
+    }
 
     public function sellerOrderedProducts(){
         $products=Product::with('images','orders')->where('seller_id',Auth::id())->get();
         // dd($products);
-        return view('seller/sellerOrders',compact('products'));
+        return view('seller.sellerOrders',compact('products'));
     }
 
 
@@ -41,7 +56,8 @@ class SellerC extends Controller
             $otp = rand(100000, 999999);
             session([
                 'otp' => $otp,
-                'phone' => $request->seller_phone
+                'phone' => $request->seller_phone,
+                'otp_source' => 'seller'
             ]);
 
             $sid = config('services.twilio.sid');
@@ -69,8 +85,15 @@ class SellerC extends Controller
         if($enteredOtp==session('otp')){
             session()->forget('otp'); 
             session()->put('otp_verified', true);
-
-            return redirect('seller/sellerDetails');
+            if(session('otp_source') == 'seller'){
+                session()->forget('otp_source');
+                return redirect('seller/sellerDetails');
+            }
+            elseif (session('otp_source') === 'staff') {
+                session()->forget('otp_source');    
+                return redirect('staff/SignupDetails');
+            }
+            return redirect('/');
         } else {
             return back()->withErrors(['otp' => 'Invalid OTP. Please try again.']);
         }
@@ -81,8 +104,6 @@ class SellerC extends Controller
         $request->validate([
             'name'=>'required|string|max:255',
             'email' => 'required|email|unique:Users,email',
-            // 'password' => 'required|string|min:8|confirmed',
-            // 'confirm_password' => 'required|string|min:8|same:password',
         ]);
 
         if (!session('otp_verified')) {
@@ -101,26 +122,41 @@ class SellerC extends Controller
 
         Auth::login($data);
         session()->forget(['otp_verified', 'phone']);
-        return redirect('seller/sellerHome');
+        return redirect('seller/sellerDashboard');
     }
 
     ////seller login
 
-    public function sellerLogin(Request $request){
+    public function sellerLogin(Request $request)
+    {
         $credentials = $request->validate([
             'login_email' => 'required|email',
             'login_password' => 'required',
         ]);
 
-        if (Auth::attempt(['email' => $credentials['login_email'], 
-                            'password' => $credentials['login_password'], 
-                            'role' => 'seller'])) {
-            $request->session()->regenerate();
-            return redirect('seller/sellerHome');
+        if (!Auth::attempt([
+            'email' => $credentials['login_email'],
+            'password' => $credentials['login_password'],
+            'account_status' => 'active',
+            ])) {
+            return back()->withErrors([
+                'login_email' => 'Check your email and password and try again.',
+            ])->withInput();
         }
 
+        $request->session()->regenerate();
+        $user = Auth::user();
+        if ($user->role === 'staff') {
+            return redirect('staff/staffDashboard');
+        }
+
+        if ($user->role === 'seller') {
+            return redirect('seller/sellerDashboard');
+        }
+        Auth::logout();
+
         return back()->withErrors([
-            'login_email' => 'check your email and password and try again.',
+            'login_email' => 'Check your email and password and try again.',
         ]);
     }
 

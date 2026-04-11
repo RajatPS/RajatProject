@@ -61,6 +61,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .admin-title {
@@ -69,10 +70,10 @@
             font-weight: 700;
         }
 
-        .admin-actions {
+        /* .admin-actions {
             display: flex;
             gap: 15px;
-        }
+        } */
 
         .btn {
             padding: 12px 24px;
@@ -363,13 +364,9 @@
             .header-top {
                 flex-direction: column;
                 gap: 15px;
-                text-align: center;
             }
 
-            .admin-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
+ 
 
             .search-filter {
                 flex-direction: column;
@@ -605,6 +602,30 @@
             backdrop-filter: blur(5px);
         }
 
+        .back-btn {
+            text-decoration: none;
+            background: linear-gradient(135deg, #eb0656 0%, #e84393 100%); 
+            color: white !important; 
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(235, 6, 86, 0.2);
+            border: none;
+            
+        }
+       .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(235, 6, 86, 0.4);
+            background: linear-gradient(135deg, #ff1f66 0%, #eb0656 100%);
+            color: white !important;
+        }
+
         
 
     </style>
@@ -618,9 +639,7 @@
                 <h4 class="alert-heading text-white mt-2">Product Table is Empty</h4>
                 <p class="text-white mb-0">No products have been added yet. Click below to add your first product!</p>
                 <hr class="border-light">
-                <a href="{{ url('admin/Aaddproducts') }}" class="btn btn-warning mt-2">
-                    <i class="fas fa-plus-circle me-2"></i> Add New Product
-                </a>
+                <h3 class="text-white">only sellers can add products from the seller dashboard</h3>
             </div>
         </div>
     @else
@@ -635,17 +654,10 @@
         <div class="header">
             <div class="header-top">
                 <h1 class="admin-title">Product Management</h1>
-                <div class="admin-actions">
-                    <a href="/admin/Aaddproducts" class="btn btn-primary">
-                        ➕ Add Product
-                    </a>
-                    <a href="#" class="btn btn-secondary">
-                        📊 Analytics
-                    </a>
-                    <a href="#" class="btn btn-secondary">
-                        ⚙️ Settings
-                    </a>
-                </div>
+                 <a href="javascript:history.back()" class="back-btn">
+                    Back to Dashboard 
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
 
@@ -657,10 +669,6 @@
             <div class="stat-card">
                 <div class="stat-number">{{$activeProducts}}</div>
                 <div class="stat-label">Active Products</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">32</div>
-                <div class="stat-label">Draft Products</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">{{$lowStock}}</div>
@@ -733,7 +741,7 @@
                         <td>2024-01-15</td>
                         <td>
                             <div class="action-buttons">                                
-                                <a href="{{url("admin/AeditProducts/". $product->id)}}" class="btn btn-edit btn-sm">✏️ Edit</a>
+                                {{-- <a href="{{url("admin/AeditProducts/". $product->id)}}" class="btn btn-edit btn-sm">✏️ Edit</a> --}}
                                 
                                 <button type="button" class="btn demo-btn btn-sm" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
                                 data-id="{{$product->id}}" data-name="{{$product->product_name}}" 

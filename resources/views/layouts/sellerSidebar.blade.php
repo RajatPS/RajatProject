@@ -101,7 +101,8 @@
         </div>
         
         <div class="sidebar-menu">
-        <a href="/seller/dashboard" class="menu-item {{ Request::is('seller/dashboard') ? 'active' : '' }}">
+
+        <a href="/seller/sellerDashboard" class="menu-item {{ Request::is('seller/sellerDashboard') ? 'active' : '' }}">
             <i class="fas fa-th-large"></i> <span>Dashboard</span>
         </a>
 
@@ -131,8 +132,31 @@
     </div>
 
     <div class="sidebar-footer">
-        <a href="logout.html" class="menu-item">
+        <a href="#" class="menu-item" onclick="confirmLogout(event)">
             <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
         </a>
+        <form method="POST" action="{{url('seller/logout')}}" id="logout-form">
+            @csrf
+        </form>
     </div>
 </nav>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmLogout(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Logout?",
+                text: "You will be logged out of the  Seller Dashboard.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#ff4783",
+                cancelButtonColor: "#667eea",
+                confirmButtonText: "Yes, logout"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+</script>

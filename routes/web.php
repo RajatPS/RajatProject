@@ -6,6 +6,7 @@ use App\Http\Controllers\CartC;
 use App\Http\Controllers\OrderC; 
 use App\Http\Controllers\Products;
 use App\Http\Controllers\SellerC;
+use App\Http\Controllers\StaffC;
 use App\Http\Controllers\UserReviewC;
 use App\Http\Controllers\Users;
 use Illuminate\Support\Facades\Route;
@@ -109,26 +110,32 @@ Route::middleware(['auth',])->group(function () {
         });
 
 
-        route::get('admin/adminDashboard',function(){
-            return view('admin.adminDashboard');
-        });
+        route::get('admin/adminDashboard',[AdminController::class,'adminPanel']);
 
         route::get('admin/Amanageorders',[OrderC::class,'viewOrders']); // add Products
         route::post("admin/deleteOrder",[AdminController::class,'deleteOrder']); // delete order
         route::post("admin/orderStatus",[AdminController::class,'updateOrderStatus']); // update order status
-
         Route::POST("Aaddproducts",[Products::class,'addProducts']);// admin view Products
-        Route::get('admin/Aproducts', [Products::class, 'index'])->name('Aproducts');
+        Route::get('admin/Aproducts', [Products::class, 'index']);
         Route::POST('admin/Aproducts/{id}/toggle', [Products::class, 'toggleStatus']);
+
+        route::get('admin/AdminUserManagement',[AdminController::class,'userManagement']);
+        route::post('admin/updateUserStatus',[AdminController::class,'updateUserStatus']);
+        route::post('admin/deleteUser',[AdminController::class,'deleteUser']);
+        route::post('admin/profile',[AdminController::class,'updateAdminProfile']);
+        route::post('admin/logout',[AdminController::class,'adminLogout']);
+
 
 
         /////////////  edit Products details /////////////////////////////
 
-        Route::get('admin/AeditProducts/{id}', [Products::class, 'editProducts']);
-        Route::post('admin/AeditProducts/{id}', [Products::class, 'updateProducts']);
+        // Route::get('admin/AeditProducts/{id}', [Products::class, 'editProducts']);  //   removed because not needed admin edit product
+        // Route::post('admin/AeditProducts/{id}', [Products::class, 'updateProducts']);
+
+
         Route::post('admin/AdeleteProducts/{id}', [Products::class, 'deleteProducts']);
 
-        route::get('admin/adminpanell',[AdminController::class,'adminPanel'])->name('admin.dashboard');
+        route::get('admin/salesSummary',[AdminController::class,'salesSummary'])->name('admin.dashboard');
 
 });
 
@@ -162,13 +169,7 @@ route::post('/seller/login',[SellerC::class,'sellerLogin']);
 Route::get('/auth/googlesignup', [AuthController::class, 'signupredirect']);
 Route::get('/auth/googlesignup/callback', [AuthController::class, 'signupcallback']);
 
-route::get('/seller/dashboard',function(){
-    return view('seller.sellerHome');
-});
-
-
-// Route::get('/auth/{provider}/redirect', [AuthController::class, 'fredirect']);
-// Route::get('/auth/{provider}/callback', [AuthController::class, 'fcallback']);
+Route::get('seller/sellerDashboard', [sellerC::class, 'sellerDashboard']);
 
 Route::get('/auth/googlelogin', [SellerC::class, 'Loginredirect']);
 Route::get('/auth/googlelogin/callback', [SellerC::class, 'Logincallback']);
@@ -179,14 +180,10 @@ route::get('/seller/sellerDetails',function(){
 });
 
 route::post('/seller/sellerSubmitDetails',[SellerC::class,'sellerDetails']);
+route::post('/seller/logout',[SellerC::class,'sellerLogout']);
+
 
 Route::middleware(['auth',] )->group(function () {
-
-    route::get('seller/sellerHome',function(){
-        return view('seller.sellerHome');
-    });
-
-
 
     route::get('seller/products/',[SellerC::class,'sellerProducts']);
  
@@ -215,3 +212,16 @@ Route::middleware(['auth',] )->group(function () {
     
 
 });
+
+
+    ////////////////////////////////////////////////////////////////////////////////// staff////////////////////
+
+    route::get('staff/staffSignup',function(){
+        return view('staff.staffSignup');
+    });
+    route::post('/staff/sendOtp',[StaffC::class,'sendotp']);
+
+    route::get('staff/SignupDetails',function(){
+        return view('staff.SignupDetails');
+    });
+    route::post('staff/submitSignupDetails',[StaffC::class,'submitSignupDetails']);

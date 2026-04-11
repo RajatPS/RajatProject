@@ -5,12 +5,56 @@ use App\Models\Product;
 use App\Models\Productimg;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
 
 
 class Products extends Controller
 {
 
+ //edit product
+
+    public function editProducts($id)
+    {
+        $products = Product::findOrFail($id);
+        $totalProducts = Product::count();  
+        if (!$products) {
+            return redirect()->back()->withErrors('Product not found.');
+        }
+        return view("admin.AeditProducts",compact('products','totalProducts'));
+        
+    }
+
+    /////update product
+    public function updateProducts(Request $request,$id)
+    {
+        
+        $request->validate([
+            'productName' => 'max:50',
+            'category' => 'max:50',
+            'productPrice' => 'max:50',
+            'productStock' => 'max:50',
+            'productWeight' => 'max:50',
+            'description' => 'max:500',
+            'productStatus' => 'max:10', 
+        ]);
+        $status = $request->input('productStatus');
+        if($status == "active"){
+            $status = 1;
+        }else{
+            $status = 0;
+        }
+        $product = Product::findOrFail($id);
+        $product->update([
+            'product_name' => $request->input('productName'),
+            'category' => $request->input('category'),
+            'price' => $request->input('productPrice'),
+            'stock' => $request->input('productStock'),
+            'weight' => $request->input('productWeight'),
+            'description' => $request->input('description'),
+            'status' => $status,
+        ]);
+
+        return redirect('seller/products/')->with('success', 'Product updated successfully!');
+    }
 
   
 
@@ -21,7 +65,6 @@ class Products extends Controller
         $rawProducts = $request->products;
         $selectedProducts = [];
 
-        // Normalize input (THIS IS THE FIX)
         $decoded = json_decode($rawProducts, true);
 
         if (
@@ -84,21 +127,16 @@ class Products extends Controller
     {
         $prod = Product::with('images')->paginate(20);
         $totalProducts = Product::count();
-        $lowStock=Product::where('stock','<=',10)->count(); 
+        $lowStock=Product::where('stock','<=',20)->count(); 
         $activeProducts = Product::where('status','1')->count();
         return view('admin.Aproducts',compact('prod','totalProducts','activeProducts','lowStock',));
-
     }
 
     
     public function toggleStatus(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-
-        // Get new status from AJAX
         $newStatus = $request->input('status');
-
-        // Update and save
         $product->status = $newStatus;
         $product->save();
         return response()->json([
@@ -107,96 +145,6 @@ class Products extends Controller
         ]);
         
     }
-
-    public function addProducts(Request $Request)
-    {
-         
-        $Request->validate([
-            'productName' => 'required|max:50',
-            'category' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'description' => 'required|max:200',
-            'productImages' => 'nullable',
-            'productImages.*' => 'image',
-            'status' => 'required',
-            'type' => 'nullable|array',
-            'type.*' => 'string',
-            'weight' => 'required|numeric',
-        ]);
-
-        $save = Product::create([
-            'product_name' => $Request->productName,
-            'category' => $Request->category,
-            'price' => $Request->price,
-            'stock' => $Request->stock,
-            'description' => $Request->description,
-            'status' => $Request->status,
-            'type' => $Request->type,  
-            'weight' => $Request->weight,
-            'seller_id' => Auth::id(),
-        ]);
-        
-
-        if ($Request->hasFile('productImages')) {                          // for multiple image storage
-            foreach ($Request->file('productImages') as $image) {
-                $imagePath = $image->store('images', 'public');
-
-                Productimg::create([
-                    'product_id' => $save->id,
-                    'image' => $imagePath,
-                ]);
-            }
-        }
-        return redirect()->back()->with('success', 'Product added successfully!');
-    }
-
-    ////edit product
-
-    public function editProducts($id)
-    {
-        $products = Product::findOrFail($id);
-        $totalProducts = Product::count();  
-        if (!$products) {
-            return redirect()->back()->withErrors('Product not found.');
-        }
-        return view("admin.AeditProducts",compact('products','totalProducts'));
-        
-    }
-
-    /////update product
-    public function updateProducts(Request $request,$id)
-    {
-        
-        $request->validate([
-            'productName' => 'max:50',
-            'category' => 'max:50',
-            'productPrice' => 'max:50',
-            'productStock' => 'max:50',
-            'productWeight' => 'max:50',
-            'description' => 'max:500',
-            'productStatus' => 'max:10', 
-        ]);
-        $status = $request->input('productStatus');
-        if($status == "active"){
-            $status = 1;
-        }else{
-            $status = 0;
-        }
-        $product = Product::findOrFail($id);
-        $product->update([
-            'product_name' => $request->input('productName'),
-            'category' => $request->input('category'),
-            'price' => $request->input('productPrice'),
-            'stock' => $request->input('productStock'),
-            'weight' => $request->input('productWeight'),
-            'description' => $request->input('description'),
-            'status' => $status,
-        ]);
-
-        return redirect('seller/products/')->with('success', 'Product updated successfully!');
-    }
-
 
     ////delete product
 
@@ -207,3 +155,60 @@ class Products extends Controller
         return back()->withsuccess("Product deleted successfully!");
     }
 }
+
+
+
+
+
+
+
+
+
+//removed part of admin edit product 
+   
+
+
+//removed part of admin add product
+
+    // public function addProducts(Request $Request)
+    // {
+         
+    //     $Request->validate([
+    //         'productName' => 'required|max:50',
+    //         'category' => 'required',
+    //         'price' => 'required|numeric',
+    //         'stock' => 'required|integer',
+    //         'description' => 'required|max:200',
+    //         'productImages' => 'nullable',
+    //         'productImages.*' => 'image',
+    //         'status' => 'required',
+    //         'type' => 'nullable|array',
+    //         'type.*' => 'string',
+    //         'weight' => 'required|numeric',
+    //     ]);
+
+    //     $save = Product::create([
+    //         'product_name' => $Request->productName,
+    //         'category' => $Request->category,
+    //         'price' => $Request->price,
+    //         'stock' => $Request->stock,
+    //         'description' => $Request->description,
+    //         'status' => $Request->status,
+    //         'type' => $Request->type,  
+    //         'weight' => $Request->weight,
+    //         'seller_id' => Auth::id(),
+    //     ]);
+        
+
+    //     if ($Request->hasFile('productImages')) {                          // for multiple image storage
+    //         foreach ($Request->file('productImages') as $image) {
+    //             $imagePath = $image->store('images', 'public');
+
+    //             Productimg::create([
+    //                 'product_id' => $save->id,
+    //                 'image' => $imagePath,
+    //             ]);
+    //         }
+    //     }
+    //     return redirect()->back()->with('success', 'Product added successfully!');
+    // }

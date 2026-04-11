@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 class Users extends Controller
 {
 
+
     //update user details
     public function update_details(Request $request){
         $user_id = Auth::id();
@@ -71,6 +72,7 @@ class Users extends Controller
                 'email' => $signup['gmail'],
                 'password' =>Hash::make($signup['password']),
                 'role' => 'user',
+                'account_status' => 'Active',
             ]);
             
             return redirect("/");

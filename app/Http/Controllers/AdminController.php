@@ -3,14 +3,75 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\User;
 use App\Models\Product;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
+
+    public function adminLogout(){
+        Auth::logout();
+        return redirect('admin/adminLogin');
+    }
+
+    public function updateAdminProfile(Request $request){
+        $admin = Auth::user();
+        $admin->email = $request->input('email');
+        if ($request->filled('password')) {
+            $admin->password = bcrypt($request->input('password'));
+        }
+        $admin->save();
+        return back()->with('success', 'Profile updated successfully.');
+    }
+    
+
+    public function deleteUser(Request $request){
+        $userId = $request->input('userId');    //for all types of data use input() method
+        $user=User::where('id', $userId)->where('role', '!=', ['admin', 'seller'])->first(); 
+        if ($user) {
+            $user->delete();
+        }
+        return back();
+    }
+
+    public function updateUserStatus(Request $request){
+        // dd($request->all());
+        $userId = $request->input('user_id'); 
+        $newStatus = $request->input('status');
+
+        $user = User::where('id', $userId)->where('role', '!=', ['admin', 'seller'])->first();
+        if ($user) {
+            $user->account_status = $newStatus;
+            $user->save();
+            return back()->with('success', 'User status updated successfully.');
+        } else {
+            return back()->withErrors(['error' => 'User not found.']);
+        }
+        
+    }
+
+    public function userManagement(){
+        $users = User::whereNotIn('role', ['admin', 'seller'])->get();
+        return view('admin/AdminUserManagement', compact('users'));
+    }
+
     public function adminPanel(){
+        $sales = Order::sum('totalAmount');
+        $newOrders = Order::whereDate('order_date', Carbon::today())->count();
+        $onlineUsers = User::where('LastSeen', '>=', now()->subMinutes(5))->where('role','!=', 'admin')->count();
+        if(Auth::check() && Auth::user()->role === 'admin'){
+            return view('admin/adminDashboard', compact('sales', 'newOrders', 'onlineUsers'));
+        }
+        else{
+            return redirect('admin/adminlogin');
+        }
+    } 
+
+
+    public function salesSummary(){
         // if(!session()->has('adminName')){
         //     return redirect('admin/adminlogin');
         // }
@@ -44,7 +105,7 @@ class AdminController extends Controller
 
         // dd($totalSales, $totalOrders, $totalProducts, $totalUsers);
 
-        return view('admin/adminpanell', compact('totalProducts', 'currentYear', 'data'));
+        return view('admin/salesSummary', compact('totalProducts', 'currentYear', 'data'));
     }
 
     public function deleteOrder(Request $request){
@@ -83,22 +144,21 @@ class AdminController extends Controller
     }
 
 
-    public function adminLogin(){
-        $request=request();
+    public function adminLogin(request $request){
         $request->validate([
             'login_email'=>'required|email',
             'login_password'=>'required|min:1',
         ]);
-
-        $admin=User::where('email', $request->login_email)->first();
 
         if (Auth::attempt([
             'email' => $request->login_email,
             'password' => $request->login_password,
             'role' => 'admin',
         ])) {
+
             return redirect('admin/adminDashboard');
-        }else{
+        }
+        else{
             return back()->withErrors(['login_error' => 'Invalid email or password']);
         }
     }

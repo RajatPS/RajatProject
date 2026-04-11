@@ -298,7 +298,7 @@
                                 <i class="fas fa-calendar user-detail-icon"></i>
                                 <div class="flex-grow-1">
                                     <div class="user-detail-label">Date of Birth</div>
-                                    <div class="user-detail-value">{{ \Carbon\Carbon::parse($user_details->DOB)->format('Y-m-d') }}</div>
+                                    <div class="user-detail-value">{{ $user_details->DOB }}</div>
                                 </div>
                             </div>
                         </div>

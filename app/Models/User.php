@@ -19,6 +19,11 @@ class User extends Authenticatable
         'gender',
         'password',
         'role',
+        'account_status',
+        'assigned_area',
+        'vehicle_type',
+        'vehicle_no',
+        'license_no',
         ];
 
     public function orders()

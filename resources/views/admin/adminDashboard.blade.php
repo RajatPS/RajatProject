@@ -292,6 +292,7 @@
                 grid-template-columns: 1fr;
             }
         }    
+        
         </style>
 
 </head>
@@ -300,7 +301,7 @@
         
         <aside class="sidebar">
             <div class="logo">
-                <span class="logo-text">Aura Admin</span>
+                <span class="logo-text">Pencart Admin</span>
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -308,7 +309,7 @@
                         <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#"><i class="fas fa-users"></i> User Management</a>
+                        <a href="{{url('admin/AdminUserManagement')}}"><i class="fas fa-users"></i> User Management</a>
                     </li>
                     <li class="nav-item">
                         <a href="{{url('admin/Amanageorders')}}"><i class="fas fa-box"></i> Orders (Active)</a>
@@ -319,7 +320,7 @@
                     <li class="nav-item dropdown">
                         <a href="#" class="dropdown-toggle"><i class="fas fa-chart-line"></i> Reports <i class="fas fa-caret-down"></i></a>
                         <ul class="submenu">
-                            <li><a href="#">Sales Summary</a></li>
+                            <li><a href="{{url('admin/salesSummary')}}">Sales Summary</a></li>
                             <li><a href="#">Traffic Analytics</a></li>
                         </ul>
                     </li>
@@ -329,7 +330,12 @@
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                <a href="#" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="#" class="logout-btn" onclick="confirmLogout(event)">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                <form id="logout-form" action="{{ url('admin/logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
             </div>
         </aside>
 
@@ -337,25 +343,25 @@
             <header class="main-header">
                 <h2>Welcome, Admin!</h2>
                 <div class="user-profile">
-                    <i class="fas fa-bell"></i>
-                    <img src="avatar.jpg" alt="User Avatar" class="avatar">
+                    {{-- <i class="fas fa-bell"></i> --}}
+                     <a href="{{ url('admin/profile') }}"><img src="avatar.jpg" alt="User Avatar" class="avatar"></a>  {{--add a link to the profile page if needed --}}
                 </div>
             </header>
 
             <section class="dashboard-grid">
                 <div class="widget accent-widget">
                     <h3>Total Sales</h3>
-                    <p>$125,890</p>
+                    <p>{{ number_format($sales, 2) }}</p>
                     <i class="fas fa-dollar-sign"></i>
                 </div>
                 <div class="widget primary-widget">
                     <h3>New Orders</h3>
-                    <p>45</p>
+                    <p>{{ $newOrders }}</p>
                     <i class="fas fa-shopping-cart"></i>
                 </div>
                 <div class="widget success-widget">
                     <h3>Users Online</h3>
-                    <p>320</p>
+                    <p>{{ $onlineUsers }}</p>
                     <i class="fas fa-users"></i>
                 </div>
                 
@@ -366,9 +372,27 @@
             </section>
         </main>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Simple script to toggle dropdown submenu
+        function confirmLogout(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Logout?",
+                text: "You will be logged out of the admin panel.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#ff4783",
+                cancelButtonColor: "#667eea",
+                confirmButtonText: "Yes, logout"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+
+        // script to toggle dropdown submenu
         document.querySelectorAll('.dropdown-toggle').forEach(item => {
             item.addEventListener('click', event => {
                 event.preventDefault();

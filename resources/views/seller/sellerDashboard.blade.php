@@ -94,7 +94,7 @@
             <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
             <div class="stat-info">
                 <h3 style="font-size: 0.9rem; opacity: 0.7;">Today's Orders</h3>
-                <p style="font-size: 1.5rem; font-weight: bold;">12</p>
+                <p style="font-size: 1.5rem; font-weight: bold;">{{ $todayOrders }}</p>
             </div>
         </div>
         <div class="stat-box">
@@ -120,54 +120,35 @@
                     <th>Order ID</th>
                     <th>Product Details</th>
                     <th>Customer</th>
-                    <th>Net Earnings</th>
+                    <th>Product Price</th>
                     <th>Status</th>
                     <th>Quick Action</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>#ORD-7721</td>
-                    <td>
-                        <div class="product-cell">
-                            <div class="dummy-img">P1</div>
-                            <div>
-                                <p style="font-weight: 600;">Wireless Headphones</p>
-                                <p style="font-size: 0.75rem; opacity: 0.7;">SKU: WH-001</p>
+                @foreach($userOrders as $order)
+                    <tr>
+                        <td>{{ $order->id }}</td>
+                        <td>
+                            <div class="product-cell">
+                                <div class="dummy-img">P1</div>
+                                <div>
+                                    <p style="font-weight: 600;">{{ $order->product->product_name }}</p>
+                                    <p style="font-size: 0.75rem; opacity: 0.7;">SKU: WH-001</p>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td>John Doe</td>
-                    <td>$89.00</td>
-                    <td><span class="status-pill st-pending">Pending</span></td>
-                    <td>
-                        <select class="action-select">
-                            <option>Update Status</option>
-                            <option>Print Invoice</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>#ORD-7722</td>
-                    <td>
-                        <div class="product-cell">
-                            <div class="dummy-img">P1</div>
-                            <div>
-                                <p style="font-weight: 600;">Wireless Headphones</p>
-                                <p style="font-size: 0.75rem; opacity: 0.7;">SKU: WH-001</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td>John</td>
-                    <td>$89.00</td>
-                    <td><span class="status-pill st-pending">Pending</span></td>
-                    <td>
-                        <select class="action-select">
-                            <option>Update Status</option>
-                            <option>Print Invoice</option>
-                        </select>
-                    </td>
-                </tr>
+                        </td>
+                        <td>{{ $order->fullname }}</td>
+                        <td>₹ {{ $order->totalAmount }}</td>
+                        <td><span class="status-pill st-pending">{{ $order->status }}</span></td>
+                        <td>
+                            <select class="action-select">
+                                <option>Update Status</option>
+                                <option>Print Invoice</option>
+                            </select>
+                        </td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>
