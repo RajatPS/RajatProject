@@ -13,6 +13,21 @@ use Twilio\Rest\Client;
 
 class SellerC extends Controller
 {
+public function updateStatus(Request $request, $id) {
+    
+    $order = Order::findOrFail($id);
+    $order->status = $request->status;
+    $order->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Status updated successfully'
+    ]);
+}
+
+
+
+
     public function sellerLogout(Request $request){
         Auth::logout();
         $request->session()->invalidate();
@@ -24,10 +39,13 @@ class SellerC extends Controller
         $user = Auth::user();
         $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();  //better version thsn previous ones
         $todayOrders = $userOrders->where('created_at', '>=', now()->startOfDay())->count();
+        $pendingOrders = $userOrders->where('status', 'Pending');
+        $confirmedOrders = $userOrders->where('status', 'confirmed');
         $pendingPayout = Order::whereHas('product', function ($query) {
             $query->where('seller_id', Auth::id());
             })->where('status', 'delivered')->where('delivered_at', '>=', now()->subDays(3))->sum('totalAmount');
-        return view('seller.sellerDashboard', compact('userOrders', 'todayOrders', 'pendingPayout'));
+
+        return view('seller.sellerDashboard', compact('userOrders', 'todayOrders', 'pendingPayout','pendingOrders','confirmedOrders'));
     }
 
     public function sellerOrderedProducts(){
@@ -147,7 +165,7 @@ class SellerC extends Controller
         $request->session()->regenerate();
         $user = Auth::user();
         if ($user->role === 'staff') {
-            return redirect('staff/staffDashboard');
+            return redirect('staff/Dashboard');
         }
 
         if ($user->role === 'seller') {

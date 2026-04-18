@@ -490,7 +490,7 @@
             <div class="order-card">
                 <div class="order-header-info">
                     <div class="order-id-status">
-                        <h5>#{{ $order->id }}</h5>
+                        <h5>#ORD-{{ $order->id }}</h5>
                         <span class="order-status status-{{ strtolower($order->status) }}">
                             {{ ucfirst($order->status) }}
                         </span>
@@ -559,6 +559,16 @@
                                             <button type="submit" class="btn-glass-custom btn-cancel-order w-100" ">
                                                 <i class="fas fa-times-circle"></i>
                                                 Cancel
+                                            </button>
+                                        </form>
+                                    @endif
+                                    @if($order->can_return)
+                                        <form action="{{ url('users/returnOrder')}}" method="POST" class="m-0">
+                                            @csrf
+                                            <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                            <button type="submit" class="btn-glass-custom btn-return-order w-100" ">
+                                                <i class="fas fa-undo"></i>
+                                                Return
                                             </button>
                                         </form>
                                     @endif

@@ -10,6 +10,49 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderC extends Controller
 {
+    public function submitreturnReason(Request $Request){
+        $order_id= $Request->order_id;
+        $reason = $Request->reason;
+        $order = Order::where([
+                                'id'=>$order_id,
+                                'user_id'=>Auth::id()
+                                ])->first();
+
+        if(!$order){
+            return redirect('users/Uview_Orders')->with('error', 'Order not found or inaccessible.');
+        }
+        else{
+            if($order->status == 'delivered'){
+                $order->status = 'returned';
+                $order->reason = $reason;
+                $order->save();
+                return redirect('users/Uview_Orders')->with('success', 'Order returned successfully!');
+            } else {
+                return redirect('users/Uview_Orders')->with('error', 'Only delivered orders can be returned.');
+            }
+        }
+
+    }
+
+    public function returnOrder(Request $Request){
+        $order_id= $Request->order_id;
+        $order = Order::where([
+                                'id'=>$order_id,
+                                'user_id'=>Auth::id()
+                                ])->first();
+
+        if(!$order){
+            return back()->with('error', 'Order not found or inaccessible.');
+        }
+        else{
+            if($order->status == 'delivered'){
+                return view('/users/UreturnOrderReason', compact('order'));
+            } else {
+                return back()->with('error', 'Only delivered orders can be returned.');
+            }
+        }
+
+    }
 
     public function cancelOrder(Request $Request){
         $order_id= $Request->order_id;
@@ -33,16 +76,17 @@ class OrderC extends Controller
 
     public function userOrders(){
         $orders = Order::with(['product.images'])->where('user_id', Auth::id())->get();
-        
-
-            ////////////////////////////////////////////////////////////// to check if order can be cancelled or not
-            foreach ($orders as $order){
-                $orderDateTime = Carbon::createFromFormat(
-                    'Y-m-d H:i:s',
-                    $order->order_date . ' ' . $order->order_time
-                );
-                $order->can_cancel = $orderDateTime->addHours(24)->isFuture();
-
+            ///////check if can be cancelled or not
+            foreach ($orders as $order) {
+                $order->can_cancel = Carbon::parse($order->order_date)->addHours(24)->isFuture();
+            }
+            //check if can be returned or not
+            foreach ($orders as $order) {
+                if($order->status != 'delivered'){
+                    $order->can_return = false;
+                    continue;
+                }
+                $order->can_return = Carbon::parse($order->delivered_at)->addHours(24)->isFuture();
             }
         return view('users.Uview_Orders', compact('orders'));
     }

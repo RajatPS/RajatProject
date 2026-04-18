@@ -136,11 +136,9 @@ class AdminController extends Controller
         $user=User::create([
             'email'=>$request->gmail,
             'password'=>bcrypt($request->password),
+            'role'=>'admin',
         ]);
-        
-        $user->role="admin";
-        $user->save();
-        return view('admin/admindashboard');
+        return view('admin/adminLogin')->with('success', 'Admin registered successfully. Please login.');
     }
 
 

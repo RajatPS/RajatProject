@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 use Illuminate\Routing\Controller;
@@ -10,6 +11,16 @@ use Illuminate\Support\Facades\Hash;
 
 class Users extends Controller
 {
+
+    public function searchproduct(Request $request){
+        $searchedProduct = $request-> input('query');
+        $products = Product::where('category','LIKE','%' .$searchedProduct . '%')->orWhere('product_name', 'LIKE', '%' . $searchedProduct . '%')
+        ->get();
+        if(!$products){
+            return view('users/Uproducts')->with('error','product not found');
+        }
+        return view('users.Uproducts',compact("products"));
+    }
 
 
     //update user details
@@ -75,7 +86,7 @@ class Users extends Controller
                 'account_status' => 'Active',
             ]);
             
-            return redirect("/");
+            return redirect("users/Ulogin")->with('success', 'Signup successful! Please login to continue.');
         }
     }
 

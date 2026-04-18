@@ -75,19 +75,22 @@ Route::middleware(['auth',])->group(function () {
 
         route::get('users/Ucart',[CartC::class,'cart']);                            //go to cart
         route::post('/Ucart',[CartC::class,'addToCart'])->name('cart.add');         // add to cart
+        route::post('users/removeProductsFromCart',[CartC::class,'removeFromCart']);  // remove from cart
 
-        route::get('users/Ucheckout',[Products::class,'paymentDetails']);  // checkout route
         route::post('users/Ucheckout',[Products::class,'paymentDetails']);  // checkout route
         route::post('/users/Ubuyproduct',[OrderC::class,'addressDetails']);  // buy product route
+        route::post('/users/returnOrder',[OrderC::class,'returnOrder']);  // return order route
         route::post('users/cancelOrder',[OrderC::class,'cancelOrder']);  // cancel order route
-
-        route::get('users/Uview_Orders',function(){
-            return view('users.Uview_Orders');
-        }); 
+        route::post('users/UreturnOrderReason',[OrderC::class,'returnOrderReason']);  // return reason order route
+        route::post('orders/returnReason',[OrderC::class,'submitreturnReason']);  // return reason order route
         route::get("users/Uview_Orders",[OrderC::class,'userOrders']);  // user view orders route
         route::get('users/Uproduct_details/{id}',[Products::class,'buyProduct']); // product details route
-        route:: get ('users/UsingleProduct/{id}',[UserReviewC::class,'singleProductPage']);  // single product page route
+        route:: post ('users/UsingleProduct',[UserReviewC::class,'singleProductPage']);  // single product page route
         route:: post ('users/review/',[UserReviewC::class,'addReview'])->name('addReview');  // add review route
+        route::get('users/help',function(){
+            return view('users.help');
+        });
+        route::post('users/search',[Users::class,'searchproduct']);
 });
 
         ////////////////////////////////   admin routes  ///////////////////////////////////////////////////////
@@ -206,9 +209,9 @@ Route::middleware(['auth',] )->group(function () {
 
     route::post('/seller/addproduct',[Products::class,'addProducts']);
 
-    route::get('seller/dashboard/',function(){
-        return view('seller/sellerHome');
-    });
+    // route::get('seller/dashboard/',function(){
+    //     return view('seller/sellerHome');
+    // });
     
 
 });
@@ -225,3 +228,10 @@ Route::middleware(['auth',] )->group(function () {
         return view('staff.SignupDetails');
     });
     route::post('staff/submitSignupDetails',[StaffC::class,'submitSignupDetails']);
+    
+    route::get('staff/Dashboard',[StaffC::class,'staffDashboard']);
+    route::get('staff/orders',[StaffC::class,'staffOrders']);
+
+
+
+    Route::post('/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);

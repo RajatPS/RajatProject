@@ -7,6 +7,20 @@ use Illuminate\Support\Facades\Auth;
 
 class cartC extends Controller
 {
+
+    public function removeFromCart(Request $request) {
+        $userId = Auth::id();
+        $productsData = json_decode($request->input('products'), true);
+
+        if (!$productsData || !is_array($productsData)) {
+            return back()->with('error', 'No products selected.');
+        }
+        $productIds = array_column($productsData, 'id');
+
+        Cart::where('user_id', $userId)->whereIn('product_id', $productIds)->delete();
+        return back()->with('success', 'Selected products removed from cart successfully.');
+    }
+
     public function cart(){
         $userId = Auth::id();
         $cartItems = Cart::where('user_id',$userId)->get();

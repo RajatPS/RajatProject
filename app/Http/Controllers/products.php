@@ -64,7 +64,6 @@ class Products extends Controller
     {
         $rawProducts = $request->products;
         $selectedProducts = [];
-
         $decoded = json_decode($rawProducts, true);
 
         if (

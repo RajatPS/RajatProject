@@ -332,15 +332,17 @@
 </head>
 <body>
 
+<body>
     @include('layouts.messages')
     @include('layouts.ajaxMsg')
     
     <div id="page-wrapper">
         @include('layouts.navbar')
+        
         <section class="hero-section">
             <div class="container">
                 <h1 class="hero-title">Our Premium Products</h1>
-                <p class="hero-subtitle">Discover our cutting-edge solutions designed to transform your business and elevate your success to new heights.</p>
+                <p class="hero-subtitle">Discover our cutting-edge solutions designed to transform your business.</p>
             </div>
         </section>
 
@@ -360,8 +362,6 @@
                             <button class="btn filter-btn" data-filter="pencils">Pencils</button>
                             <button class="btn filter-btn" data-filter="sharpners">Sharpners</button>
                             <button class="btn filter-btn" data-filter="erasers">Erasers</button>
-                            {{-- <button class="btn filter-btn" data-filter="analytics">Boxes</button>
-                            <button class="btn filter-btn" data-filter="analytics">Bags</button> --}}
                         </div>
                     </div>
                 </div>
@@ -371,60 +371,45 @@
         <section class="products-section">
             <div class="container">
                 <div class="row g-4" id="productsContainer">
-                    
-                    
-                    
-
-                    {{-- This is from database --}}
                     @foreach ($products as $product)
                         <div class="col-xl-4 col-lg-6 col-sm-6" data-category="{{ $product->category }}">
-                        <div class="card product-card">
-                                <div class="product-image" data-bs-toggle="modal" data-bs-target="#productDetailModal"
-                                    data-bs-id="{{$product->id}}"    
+                            <div class="card product-card">
+                                <div class="product-image" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#productDetailModal"
+                                    data-id="{{ $product->id }}" 
                                     data-product-name="{{ $product->product_name }}"
                                     data-product-price="₹ {{ $product->price }}"
                                     data-product-description="{{ $product->description }}"
                                     data-product-category="{{ $product->category }}"
-{{--        for null images, optional() is used to avoid error when trying to access first image of a product that has no images. It returns null instead of throwing an error, allowing the code to handle the absence of images gracefully. --}}
                                     data-product-image="{{ asset('storage/'.optional($product->images->first())->image) }}">
-                                    <img src="{{ asset('storage/'.optional($product->images->first())->image) }}" alt="{{$product->product_name}}" style="object-fit: contain;"> --}}
-                                    data-product-image="{{ asset('storage/'.$product->images->first()->image) }}">
-                                    <img src="{{ asset('storage/'.$product->images->first()->image) }}" alt="{{$product->product_name}}" style="object-fit: contain;">
+                                    
+                                    <img src="{{ asset('storage/'.optional($product->images->first())->image) }}" alt="{{$product->product_name}}" style="object-fit: contain;">
                                     <span class="category-badge">{{$product->category}}</span>
                                 </div>
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">{{$product->product_name}}</h5> 
-                                    
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="rating">
-                                            <i class="bi bi-star-fill"></i>
-                                            <i class="bi bi-star-fill"></i>
-                                            <i class="bi bi-star-fill"></i>
-                                            <i class="bi bi-star-fill"></i>
-                                            <i class="bi bi-star-half"></i>
+                                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
                                             <span class="text-white-50 ms-1 small">(4.5)</span>
                                         </div>
                                         <span class="price-tag">₹ {{$product->price}}</span> 
                                     </div>
-
-                                    <p class="card-text">{{$product->description}}</p>
-                                    
-                                    <button type="button" class="btn btn-product mt-auto" onclick="addToCart({{$product->id }})" >
+                                    <p class="card-text text-truncate">{{$product->description}}</p>
+                                    <button type="button" class="btn btn-product mt-auto" onclick="addToCart({{ $product->id }})">
                                         <i class="bi bi-cart-plus me-2"></i>Add to Cart
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    @endforeach()
-                    {{-- till here --}}
+                    @endforeach
                 </div>
             </div>
         </section>
     </div>
 
-        {{--  Modal for product details --}}
-
-    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content product-modal-content">
                 <div class="modal-header border-0 pb-0">
@@ -434,43 +419,49 @@
                     <div class="row">
                         <div class="col-lg-6 mb-4 mb-lg-0">
                             <div id="modalImageCarousel" class="carousel slide product-image-large">
-                                <div class="carousel-inner" id="modal-image-gallery">
+                                <div class="carousel-inner">
                                     <div class="carousel-item active">
-                                        {{-- Image placeholder --}}
                                         <img src="" id="modal-image-main" class="d-block w-100" alt="Product Image">
                                     </div>
                                 </div>
-                                {{-- Carousel Controls go here if needed for multiple images --}}
                             </div>
                         </div>
 
                         <div class="col-lg-6">
-                            <h2 class="modal-title-text" id="modal-product-name">Product Name</h2>
-                            <span class="category-badge-modal" id="modal-product-category">Category</span>
+                            <h2 class="modal-title-text" id="modal-product-name"></h2>
+                            <span class="category-badge-modal" id="modal-product-category"></span>
                             
                             <hr class="my-3 modal-divider">
-
                             <h3 class="price-tag-modal" id="modal-product-price"></h3>
                             
-                            <div class="rating my-3" id="modal-product-rating">
+                            <div class="rating my-3">
                                 <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
                                 <span class="text-white-50 ms-1 small">(4.5)</span>
                             </div>
 
                             <p class="modal-product-description" id="modal-product-description"></p>
-                            
                             <hr class="my-3 modal-divider">
 
                             <div class="d-grid gap-2">
-                                <a href="#" id="modal-buy-now" class="btn btn-primary modal-button1">
-                                    <i class="bi bi-bag-fill me-2"></i> Buy Now
-                                </a>
-                                <button class="btn modal-button2" onclick="addToCart({{$product->id }})">
+                                <form id="buyNowForm" method="POST" action="{{ url('users/Ucheckout') }}">
+                                    @csrf
+                                    <input type="hidden" name="products" id="modal-input-id-buy">
+                                    <button type="submit" class="btn btn-primary modal-button1 w-100">
+                                        <i class="bi bi-bag-fill me-2"></i> Buy Now
+                                    </button>
+                                </form>
+
+                                <button class="btn modal-button2" id="modal-atc-btn">
                                     <i class="bi bi-cart-plus me-2"></i> Add to Cart
                                 </button>
-                                <a href="#" id="view-product-btn" class="btn modal-button3">
-                                    <i class="fas fa-eye me-2"></i> view product
-                                </a>
+                                
+                                <form id="viewProductForm" method="POST" action="{{ url('users/UsingleProduct') }}">
+                                    @csrf
+                                    <input type="hidden" name="product_id" id="modal-input-id-view">
+                                    <button type="submit" class="btn modal-button3 w-100">
+                                        <i class="fas fa-eye me-2"></i> view product
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -479,105 +470,139 @@
         </div>
     </div>
 
+    @include('layouts.footer')
 
-    </div> 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-
-            //ajax for cart 
-            function addToCart(productId) {
-                fetch("{{ route('cart.add') }}", {   //cart. add is name of the route 
-                    // fetch("/cart", {             //  direct URL, no route name used
-                    method: "POST",
-                    credentials:"same-origin",
-                    headers: {
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                        "Content-Type": "application/json",
-                    },    
-                    body: JSON.stringify({ product_id: productId }),          
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('success', data.message);
-                    } else {
-                        showNotification('error', data.message);
-                    }
-                })
-                .catch(error => {
-                    showNotification('error', 'Something went wrong');
-                    console.error("Error:", error);
-                });
+<script>
+    /*
+     * AJAX Function for adding products to cart
+     * Stays outside DOMContentLoaded to be globally accessible
+     */
+    function addToCart(productId) {
+        // Ensure the CSRF token exists
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        
+        fetch("{{ route('cart.add') }}", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "X-CSRF-TOKEN": csrfToken ? csrfToken.content : '',
+                "Content-Type": "application/json",
+            },    
+            body: JSON.stringify({ product_id: productId }),          
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Ensure showNotification function exists in your layouts
+                if (typeof showNotification === "function") {
+                    showNotification('success', data.message);
+                } else {
+                    alert(data.message);
+                }
+            } else {
+                if (typeof showNotification === "function") {
+                    showNotification('error', data.message);
+                } else {
+                    alert(data.message);
+                }
             }
-            ///////////  end ajax   //////
+        })
+        .catch(error => {
+            console.error("Cart AJAX Error:", error);
+        });
+    }
 
+   
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. DROPDOWN INITIALIZATION ---
+        // Manually force dropdowns to work to bypass previous JSON "static" errors
+        const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+        });
 
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const productsContainer = document.getElementById('productsContainer');
-            const productCards = productsContainer.querySelectorAll('.col-xl-4');
-            const modalElement = document.getElementById('productDetailModal'); 
-
+        // --- 2. MODAL POPULATION LOGIC ---
+        const modalElement = document.getElementById('productDetailModal'); 
+        
+        if (modalElement) {
+            // Modal Text/Image Elements
             const modalName = document.getElementById('modal-product-name');
             const modalCategory = document.getElementById('modal-product-category');
             const modalPrice = document.getElementById('modal-product-price');
             const modalDescription = document.getElementById('modal-product-description');
             const modalImageMain = document.getElementById('modal-image-main');
-            const modalBuyNowBtn = document.getElementById('modal-buy-now'); // Add this line
-            const ViewProductBtn = document.getElementById('view-product-btn'); // Add this line
-
-            const populateModalFromCard = (triggerElement) => {
-                const productName = triggerElement.getAttribute('data-product-name');
-                const productPrice = triggerElement.getAttribute('data-product-price');
-                const productCategory = triggerElement.getAttribute('data-product-category');
-                const productDescription = triggerElement.getAttribute('data-product-description');
-                const mainImagePath = triggerElement.getAttribute('data-product-image');
-                const productId = triggerElement.getAttribute('data-bs-id'); // Add this line
-
-                modalName.textContent = productName;
-                modalCategory.textContent = productCategory;
-                modalPrice.textContent = productPrice;
-                modalDescription.textContent = productDescription;
-                modalImageMain.setAttribute('src', mainImagePath);
-
-                // Set Buy Now URL dynamically
-                // modalBuyNowBtn.setAttribute('href', 'users/UbuyProduct/' + productId);  for single id
-                
-                const selectedIds = Array.isArray(productId) ? productId : [productId];
-                const url = '/users/Ucheckout?products=' + selectedIds.join(',');
-                modalBuyNowBtn.setAttribute('href', url);
-
-                ViewProductBtn.setAttribute('href', 'users/UsingleProduct/' + productId);
-
-                
-                
-            };
+            
+            // Modal Form Inputs & Buttons
+            const buyInput = document.getElementById('modal-input-id-buy');
+            const viewInput = document.getElementById('modal-input-id-view');
+            const atcBtn = document.getElementById('modal-atc-btn');
 
             modalElement.addEventListener('show.bs.modal', function (event) {
-                const triggerElement = event.relatedTarget; 
-                populateModalFromCard(triggerElement);
-            });
+                const trigger = event.relatedTarget; 
+                
+                // IMPORTANT: Use 'data-id' here to match the HTML attribute
+                const id = trigger.getAttribute('data-id');
+                
+                // Update text content
+                if (modalName) modalName.textContent = trigger.getAttribute('data-product-name');
+                if (modalCategory) modalCategory.textContent = trigger.getAttribute('data-product-category');
+                if (modalPrice) modalPrice.textContent = trigger.getAttribute('data-product-price');
+                if (modalDescription) modalDescription.textContent = trigger.getAttribute('data-product-description');
+                if (modalImageMain) modalImageMain.src = trigger.getAttribute('data-product-image');
 
-            const filterProducts = (filter) => {
+                // Update hidden inputs for forms
+                if (buyInput) buyInput.value = id;
+                if (viewInput) viewInput.value = id;
+
+                // Update the Add to Cart button in the modal
+                if (atcBtn) {
+                    atcBtn.onclick = function() {
+                        addToCart(id);
+                    };
+                }
+            });
+        }
+
+        // --- 3. CATEGORY FILTERING LOGIC ---
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const productCards = document.querySelectorAll('.col-xl-4');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const filterValue = button.getAttribute('data-filter');
+                
+                // Update active button state
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Toggle card visibility
                 productCards.forEach(card => {
-                    const category = card.getAttribute('data-category');
-                    card.style.display = (filter === 'all' || category === filter) ? 'block' : 'none';
-                });
-            };
-            
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    filterProducts(button.getAttribute('data-filter'));
+                    const cardCategory = card.getAttribute('data-category');
+                    if (filterValue === 'all' || cardCategory === filterValue) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
                 });
             });
-            filterProducts('all');
         });
-    </script>
+
+        // --- 4. SEARCH BUTTON LOGIC (From your Navbar) ---
+        const searchBtn = document.getElementById('searchBtn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function() {
+                const searchInput = document.getElementById('productSearch').value;
+                const searchForm = document.getElementById('searchForm');   
+                const searchvalue = document.getElementById('searchBarForm');
+                
+                if (searchvalue) searchvalue.value = searchInput;
+                if (searchForm) searchForm.submit();
+            });
+        }
+    });
+</script>
 
 </body>
 </html>

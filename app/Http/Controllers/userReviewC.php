@@ -42,10 +42,12 @@ class UserReviewC extends Controller
 
 
     //single Product page function
-    public function singleProductPage($id){
+    public function singleProductPage(Request $request){
+        $id = $request->product_id;
         $product = Product::with('images')->findOrFail($id);
         $image=Productimg::where('product_id',$id)->first();
         $Allreviews = User_review::where('product_id', $id)->limit(5)->get(); 
+        
 
         return view('users.UsingleProduct', compact('product', 'Allreviews','image'));
 

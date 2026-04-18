@@ -2,12 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Twilio\Rest\Client;
 
 class StaffC extends Controller
 {
+    public function staffDashboard(){
+        if(!Auth::check()){
+            return redirect('seller/sellerLogin')->withErrors(['error' => 'Please log in to access the dashboard.']);
+        }
+        $user = Auth::user();
+        // $deliveries = Order::with('product')->get();
+        $deliveries = Order::with('product')->where('status', 'offDelivery')->get();
+        $pickups = Order::with('product')->where('status', 'pickup')->get();
+        return view('staff.dashboard', compact('deliveries', 'pickups', 'user'));
+    }
+
+
     public function submitSignupDetails(Request $request){
          
         $request->validate([
