@@ -95,7 +95,7 @@ class Users extends Controller
     {
         $login=$request->validate([
             'login_email'=> 'required|email',
-            'login_password' =>'required|min:2,'
+            'login_password' =>'required|min:2'
         ]);
         $userExists = User::where('email', $login['login_email'])->exists();
         if (!$userExists) {

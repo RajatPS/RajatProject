@@ -14,6 +14,7 @@ class Order extends Model
     public $timestamps = false;
     protected $fillable = [
         'user_id',
+        'staff_id',
         'fullname',
         'contact_number',
         'email',

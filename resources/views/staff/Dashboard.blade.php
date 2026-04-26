@@ -106,12 +106,71 @@
         body , html {
             margin: 0;
             padding: 0;
-    }
-    .main-content {
-        margin-top: 70px; 
-        padding: 20px;
-        flex: 1;
-    }
+        }
+        .main-content {
+            margin-top: 70px; 
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* add products to deliverylist btn */
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 20px 0;
+            width: 100%;
+        }
+
+        /* Small, Styled Button */
+        .btn-scan-sm {
+            background: rgba(45, 52, 54, 0.9); /* Darker semi-transparent */
+            backdrop-filter: blur(5px);
+            color: #f1c40f;
+            border: 1px solid rgba(241, 196, 15, 0.5);
+            padding: 10px 25px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .btn-scan-sm:hover {
+            background: #2d3436;
+            transform: translateY(-2px);
+            border-color: #f1c40f;
+        }
+
+        .btn-scan-sm i {
+            font-size: 1.2rem;
+        }
+
+        .btn-scan-sm span {
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Small plus badge on the button */
+        .badge-plus {
+            font-size: 0.7rem !important;
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            color: #fff;
+        }
+
+        /* Ensure it stays small on mobile */
+        @media (max-width: 576px) {
+            .btn-scan-sm {
+                width: 80%; /* Takes up most of the width but stays centered */
+                justify-content: center;
+            }
+        }
 
         
     </style>
@@ -131,6 +190,13 @@
                 <h3 id="delivery-count">{{ $deliveries->count() }}</h3>
             </div>
         </div>
+        <div class="action-bar">
+    <button class="btn-scan-sm" onclick="startScanner(null, 'assign')">
+        <i class="fas fa-barcode"></i>
+        <span>SCAN TO ASSIGN</span>
+        <i class="fas fa-plus-circle badge-plus"></i>
+    </button>
+</div>
 
         <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
             <li class="nav-item">
@@ -220,9 +286,15 @@
         async function startScanner(id, mode) {
             activeTargetId = id;
             activeMode = mode;
-            document.getElementById('scanner-label').innerText = `Scanning for Order #${id}`;
+            const label = document.getElementById('scanner-label');
+            label.innerText = id ? `Scanning for Order #${id}` : "Scanning to Assign New Product";
+            
             document.getElementById('scanner-modal').style.display = 'flex';
             
+            if (html5QrCode) {
+                try { await html5QrCode.clear(); } catch(e) {}
+            }
+
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
@@ -231,7 +303,12 @@
                 config, 
                 onScanSuccess
             ).catch(err => {
-                Swal.fire('Error', 'Camera access denied', 'error');
+                console.error("Camera Error:", err);
+                Swal.fire({
+                    title: 'Camera Error',
+                    text: 'Could not access camera. Please ensure you are on a mobile device or HTTPS.',
+                    icon: 'error'
+                });
                 stopScanner();
             });
         }
@@ -239,26 +316,53 @@
         function onScanSuccess(decodedText) {
             stopScanner();
             
-            // Logic for showing status options
-            Swal.fire({
-                title: `Order #${activeTargetId}`,
-                text: `Status for ${activeMode === 'pickup' ? 'Pickup' : 'Delivery'}:`,
-                icon: 'question',
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: 'Completed',
-                denyButtonText: 'Issue/Refused',
-                cancelButtonText: 'Hold',
-                confirmButtonColor: '#27ae60'
-            }).then((result) => {
-                const status = result.isConfirmed ? 'Success' : (result.isDenied ? 'Failed' : 'Hold');
-                updateDatabase(activeTargetId, status);
-            });
+            if (activeMode === 'assign') {
+                processAssignment(decodedText);
+            } else {
+                Swal.fire({
+                    title: `Order #${activeTargetId}`,
+                    text: `Set status for ${activeMode}:`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Completed',
+                    denyButtonText: 'Failed',
+                    confirmButtonColor: '#27ae60'
+                }).then((result) => {
+                    const status = result.isConfirmed ? 'Success' : (result.isDenied ? 'Failed' : 'Hold');
+                    updateDatabase(activeTargetId, status);
+                });
+            }
         }
+
+        async function processAssignment(barcode) {
+            Swal.fire({ title: 'Assigning...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
+                const response = await fetch('/staff/assign-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ barcode: barcode })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire('Success', `Order #${data.order_id} added to your list!`, 'success')
+                        .then(() => location.reload()); 
+                } else {
+                    Swal.fire('Error', data.message || 'Product not found or already assigned.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('some error occurred.', 'product could not be assigned.', 'info');
+            }
+        }
+        
 
         async function updateDatabase(id, status) {
             try {
-                const response = await fetch('/staff/update-order', {
+                const response = await fetch('/staff/deliverOrder', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -269,12 +373,10 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    Swal.fire('Updated!', `Order ${status}`, 'success');
-                    // Refresh counts or remove card here
+                    Swal.fire('Updated!', `Order marked as ${status}`, 'success').then(() => location.reload());
                 }
             } catch (e) {
-                // For demo purposes, we will just show a toast
-                Swal.fire('Success', `Demo: Order #${id} set to ${status}`, 'success');
+                Swal.fire('Success', `Demo: Order #${id} updated to ${status}`, 'success');
             }
         }
 
@@ -288,6 +390,7 @@
                 document.getElementById('scanner-modal').style.display = 'none';
             }
         }
+
     </script>
 </body>
 </html>

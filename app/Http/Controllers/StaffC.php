@@ -10,6 +10,69 @@ use Twilio\Rest\Client;
 
 class StaffC extends Controller
 {
+    public function staffOrders(){
+        if(!Auth::check()){
+            return redirect('seller/sellerLogin')->withErrors(['error' => 'Please log in to access the dashboard.']);
+        }
+        $user = Auth::user();
+        $deliveries = Order::with('product')->where('staff_id', $user->id)->whereIn('status', ['offDelivery', 'delivered'])->get();
+        $pickups = Order::with('product')->where('staff_id', $user->id)->where('status', 'pickup')->get();
+        return view('staff.orders', compact('deliveries', 'pickups', 'user'));  
+    }
+
+    public function deliverOrder(Request $request){
+        $orderId = $request->order_id;
+        $staff_id = Auth::id();
+
+        $order= Order::where('staff_id', $staff_id)->where('id', $orderId)->first();
+        
+        if($order && $order->status === 'offDelivery'){
+            $order->status = 'delivered';
+            $order->delivered_at = now();
+            $order->save();
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found or not assigned to you.'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_id' => $orderId,  
+            'staff_id' => $staff_id,
+        ]);
+
+    }
+
+    public function assignOrder(Request $request){
+        $rawData = $request->barcode; 
+
+        // 2. Split the string into the two IDs
+        $parts = explode('|', $rawData);
+        $orderId = str_replace('OrderID:', '', $parts[0]);
+        $productId = str_replace('ProductID:', '', $parts[1] ?? '');
+        $staff_id = Auth::id();
+        $user_id = Order::where('id', $orderId)->value('user_id');
+
+            $order= Order::where('id', $orderId)->first();        
+            if($order->status === 'confirmed'  && $order->staff_id === null){
+                $order->status = 'offDelivery';
+                $order->staff_id = $staff_id;
+                $order->save();
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found or already assigned.'
+                ]);
+            }
+        return response()->json([
+            'success' => true,
+            'order_id' => $orderId,  
+            'product_id' => $productId, 
+        ]);
+    }
+
     public function staffDashboard(){
         if(!Auth::check()){
             return redirect('seller/sellerLogin')->withErrors(['error' => 'Please log in to access the dashboard.']);

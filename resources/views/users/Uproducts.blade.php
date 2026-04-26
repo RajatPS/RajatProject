@@ -341,8 +341,7 @@
         
         <section class="hero-section">
             <div class="container">
-                <h1 class="hero-title">Our Premium Products</h1>
-                <p class="hero-subtitle">Discover our cutting-edge solutions designed to transform your business.</p>
+                <h5 class="hero-title">Our Premium Products</h5>
             </div>
         </section>
 
@@ -355,8 +354,7 @@
                         </div>
                         <div class="col-md-9 text-md-start text-center">
                             <button class="btn filter-btn active" data-filter="all">All Products</button>
-                            <button class="btn filter-btn" data-filter="text Books">Text Books</button>
-                            <button class="btn filter-btn" data-filter="story Books">Story Books</button>
+                            <button class="btn filter-btn" data-filter="Books">Books</button>
                             <button class="btn filter-btn" data-filter="note Book">Note Books</button>
                             <button class="btn filter-btn" data-filter="pens">Pens</button>
                             <button class="btn filter-btn" data-filter="pencils">Pencils</button>

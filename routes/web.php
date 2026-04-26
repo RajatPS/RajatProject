@@ -235,3 +235,6 @@ Route::middleware(['auth',] )->group(function () {
 
 
     Route::post('/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);
+
+    Route::post('/staff/assign-order',[StaffC::class,'assignOrder']);
+    Route::post('/staff/deliverOrder',[StaffC::class,'deliverOrder']);
