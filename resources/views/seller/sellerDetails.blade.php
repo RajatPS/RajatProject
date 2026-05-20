@@ -98,6 +98,15 @@
 
     <div class="shape"></div>
     <div class="shape"></div>
+    @if ($errors->any())
+    <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
     <div class="login-card">
         <div class="icon-box"><i class="fas fa-user-tie"></i></div>
@@ -118,7 +127,7 @@
                 <input type="password" name="password" class="form-control" required placeholder="••••••••">
 
                 <label class="form-label">Confirm Password</label>
-                <input type="password" name="confirm_password" class="form-control" required placeholder="••••••••">
+                <input type="password" name="password_confirmation" class="form-control" required placeholder="••••••••">
 
                 <button type="submit" class="btn btn-accent w-100 py-3 shadow mt-3">
                     REGISTER AS SELLER <i class="fas fa-chevron-right ms-2"></i>

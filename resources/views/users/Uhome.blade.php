@@ -385,6 +385,14 @@
         </div>
     </section>
 
+    <section class="hero">
+        <h1>Our Featured Products</h1>
+        
+        
+        </div>
+    </section>
+    
+
     <!-- Features Section -->
     <section class="features">
         <h2>Why Choose Us</h2>

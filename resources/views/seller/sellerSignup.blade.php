@@ -191,10 +191,7 @@
         <div class="login-body">
             <form method="POST" action="/seller/sendOtp">
                 @csrf
-                {{-- <div class="form-floating">
-                    <input type="email" class="form-control" name="login_email" id="Inputfield" placeholder="name@example.com" required>
-                    <label for="Inputfield"><i class="fas fa-envelope me-2"></i>Email Address</label>
-                </div> --}}
+                
                 <div class="form-floating">
                     <input type="phone" class="form-control" name="seller_phone" id="Inputfield" placeholder="Phone Number" required>
                     <label for="Inputfield"><i class="fas fa-phone me-2"></i>Phone Number</label>
@@ -227,7 +224,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
 
-        // Auto-dismiss alert
         setTimeout(() => {
             const alert = document.querySelector('.alert');
             if (alert) {

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Details</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
@@ -214,22 +213,21 @@
     </style>
 </head>
 <body class="user-details-page">
-    <!-- Animated Background Spheres -->
     <div class="user-page-sphere"></div>
     <div class="user-page-sphere"></div>
     <div class="user-page-sphere"></div>
     <div class="user-page-sphere"></div>
     <div class="user-page-sphere"></div>
 
-    <!-- Stencil Items REMOVED -->
+@include('layouts.navbar')
 
     <div class="container" style="position: relative; z-index: 10;">
         <!-- Back Button -->
-        <div class="mb-4">
+        {{-- <div class="mb-4">
             <a href="{{ url('Uproducts') }}" class="btn user-back-btn">
                 <i class="fas fa-arrow-left me-2"></i>Back
             </a>
-        </div>
+        </div> --}}
 
         <!-- User Details Card -->
         <div class="user-details-card">

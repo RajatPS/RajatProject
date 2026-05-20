@@ -24,10 +24,16 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-content-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 40px 20px;
+            min-height: calc(100vh - 80px); /* Adjust based on navbar height */
         }
 
         .cart-container  {
@@ -36,13 +42,9 @@
             border-radius: 20px;
             padding: 40px;
             width: 100%;
-            max-width: 70vw;
-            max-height: 90vh;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 
-                        0 0 40px rgba(108, 92, 231, 0.6);
+            max-width: 1200px; /* Use a pixel value or larger percentage for better control */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            position: relative;
-            overflow: hidden;
             color: white;
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);    
         }
@@ -71,6 +73,17 @@
             transform: translateY(-4px);
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 
                         0 0 50px rgba(108, 92, 231, 0.8);
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+        -moz-appearance: textfield;
         }
 
         .cart-container::before {
@@ -287,13 +300,7 @@
 
         /* Background Floaters */
         .floating-elements {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
+            z-index: -1;
         }
 
         .floating-circle {
@@ -360,11 +367,13 @@
 </head>
 <body>
     
+@include('layouts.navbar')
+    
 <div class="floating-elements">
         <div class="floating-circle"></div>
         <div class="floating-circle"></div>
         <div class="floating-circle"></div>
-    </div>
+</div>
 
     @if(session('success') || session('error'))
         <div id="status-alert" 
@@ -382,93 +391,99 @@
             {{ session('success') ?? session('error') }}
         </div>
     @endif
+
+    <div class="page-content-wrapper">
+        <div class="container">
     
-    <div class="cart-container">
-        <div class="cart-header">
-            <h1><i class="fas fa-shopping-cart me-2"></i> Your Shopping Cart</h1>
-            <div class="total-display">
-                <i class="fas fa-rupee-sign me-2"></i>
-                Total: <span id="cart-total-display">0.00</span>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-lg-8 flex-column">
-                <form method="post" action="Ucheckout" id="checkoutForm">
-                    @csrf
-                    <div id="cart-items">
-                        @foreach($cartItems as $cartItem)
-                            @php $product = $products->firstWhere('id', $cartItem->product_id); @endphp
-                            @if($product)
-                            <div class="cart-item-card d-flex flex-column flex-md-row align-items-center" data-product-id="{{$product->id}}">
-                                <div class="col-12 col-md-1 d-flex justify-content-center mb-3 mb-md-0">
-                                    <input type="checkbox" class="product-select-checkbox form-check-input">
-                                </div>
-                                <div class="col-12 col-md-2 mb-3 mb-md-0 me-md-3">
-                                    <div class="product-image">
-                                        <img src="{{asset('storage/'.$product->images->first()->image)}}" alt="{{$product->product_name}}" style="object-fit: contain; width: 100%; height: 100%;">
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-5 product-details text-center text-md-start mb-3 mb-md-0">
-                                    <h5>{{$product->product_name}}</h5>
-                                    <p class="product-price">₹<span class="unit-price">{{$product->price}}</span></p>
-                                    <p class="product-weight">{{$product->weight}} g</p>
-                                </div>
-                                <div class="col-12 col-md-4 quantity-control justify-content-center justify-content-md-end">
-                                    <button class="qty-btn btn btn-sm btn-dec" type="button" data-action="decrement"><i class="fas fa-minus"></i></button>
-                                    <input type="number" class="qty-input form-control form-control-sm mx-2" value="1" min="1" readonly style="width: 60px;">
-                                    <button class="qty-btn btn btn-sm btn-inc" type="button" data-action="increment"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-                            @endif
-                        @endforeach
+            <div class="cart-container">
+                <div class="cart-header">
+                    <h1><i class="fas fa-shopping-cart me-2"></i> Your Shopping Cart</h1>
+                    <div class="total-display">
+                        <i class="fas fa-rupee-sign me-2"></i>
+                        Total: <span id="cart-total-display">0.00</span>
                     </div>
-                    <input type="hidden" name="products" id="selected-products">
-                </form>
-
-                <div class="text-center text-md-start mt-auto pt-4">
-                    <a href="/Uproducts" class="btn btn-outline-light rounded-pill"><i class="fas fa-arrow-left me-2"></i> Continue Shopping</a>
                 </div>
-            </div>
 
-            <div class="col-lg-4 mt-4 mt-lg-0">
-                <div class="summary-card">
-                    <h4>Order Summary</h4>
-                    
-                    <div class="summary-row">
-                        <span>Items Subtotal</span>
-                        <span>₹<span id="subtotal">0.00</span></span>
+                <div class="row">
+                    <div class="col-lg-8 flex-column">
+                        <form method="post" action="Ucheckout" id="checkoutForm">
+                            @csrf
+                            <div id="cart-items">
+                                @foreach($cartItems as $cartItem)
+                                    @php $product = $products->firstWhere('id', $cartItem->product_id); @endphp
+                                    @if($product)
+                                    <div class="cart-item-card d-flex flex-column flex-md-row align-items-center" data-product-id="{{$product->id}}">
+                                        <div class="col-12 col-md-1 d-flex justify-content-center mb-3 mb-md-0">
+                                            <input type="checkbox" class="product-select-checkbox form-check-input">
+                                        </div>
+                                        <div class="col-12 col-md-2 mb-3 mb-md-0 me-md-3">
+                                            <div class="product-image">
+                                                <img src="{{asset('storage/'.$product->images->first()->image)}}" alt="{{$product->product_name}}" style="object-fit: contain; width: 100%; height: 100%;">
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-5 product-details text-center text-md-start mb-3 mb-md-0">
+                                            <h5>{{$product->product_name}}</h5>
+                                            <p class="product-price">₹<span class="unit-price">{{$product->price}}</span></p>
+                                            <p class="product-weight">{{$product->weight}} g</p>
+                                        </div>
+                                        <div class="col-12 col-md-4 quantity-control justify-content-center justify-content-md-end">
+                                            <button class="qty-btn btn btn-sm btn-dec" type="button" data-action="decrement"><i class="fas fa-minus"></i></button>
+                                            <input type="number" class="qty-input form-control form-control-sm mx-2" value="1" min="1" max="20" readonly style="width: 60px;">
+                                            <button class="qty-btn btn btn-sm btn-inc" type="button" data-action="increment"><i class="fas fa-plus"></i></button>
+                                        </div>
+                                    </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <input type="hidden" name="products" id="selected-products">
+                        </form>
+
+                        <div class="text-center text-md-start mt-auto pt-4">
+                            <a href="/Uproducts" class="btn btn-outline-light rounded-pill"><i class="fas fa-arrow-left me-2"></i> Continue Shopping</a>
+                        </div>
                     </div>
 
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <span>₹<span id="shipping-amount">0.00</span></span>
-                    </div>
-                    
-                    <div class="summary-row">
-                        <span>Tax (5%)</span>
-                        <span>₹<span id="tax-amount">0.00</span></span>
-                    </div>
-                    
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span>₹<span id="final-total">0.00</span></span>
-                    </div>
+                    <div class="col-lg-4 mt-4 mt-lg-0">
+                        <div class="summary-card">
+                            <h4>Order Summary</h4>
+                            
+                            <div class="summary-row">
+                                <span>Items Subtotal</span>
+                                <span>₹<span id="subtotal">0.00</span></span>
+                            </div>
 
-                    <button type="button" class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
-                    <form method="post" action="removeProductsFromCart" id="removeForm">
-                        @csrf
-                        <input type="hidden" name="products" id="selected-products-remove">
-                    </form>
-                    <button type="button" class="remove-btn mt-3" id="remove-Products-btn">
-                        <i class="fas fa-trash-alt me-2"></i>Remove Selected
-                    </button>
+                            <div class="summary-row">
+                                <span>Shipping</span>
+                                <span>₹<span id="shipping-amount">0.00</span></span>
+                            </div>
+                            
+                            <div class="summary-row">
+                                <span>Tax (5%)</span>
+                                <span>₹<span id="tax-amount">0.00</span></span>
+                            </div>
+                            
+                            <div class="summary-row total">
+                                <span>Total</span>
+                                <span>₹<span id="final-total">0.00</span></span>
+                            </div>
+
+                            <button type="button" class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+                            <form method="post" action="removeProductsFromCart" id="removeForm">
+                                @csrf
+                                <input type="hidden" name="products" id="selected-products-remove">
+                            </form>
+                            <button type="button" class="remove-btn mt-3" id="remove-Products-btn">
+                                <i class="fas fa-trash-alt me-2"></i>Remove Selected
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const cartItemsContainer = document.getElementById('cart-items');
@@ -479,7 +494,6 @@
         const cartTotalDisplay = document.getElementById('cart-total-display');
         const TAX_RATE = 0.05;
 
-        // 1. Helper function to get currently checked items
         function getSelectedItems() {
             const selected = [];
             document.querySelectorAll('.cart-item-card').forEach(card => {
@@ -494,7 +508,7 @@
             return selected;
         }
 
-        // 2. Update Totals Logic
+        //Update Totals 
         function updateCartTotal() {
             const items = document.querySelectorAll('.cart-item-card');
             let subtotal = 0;
@@ -521,7 +535,7 @@
             cartTotalDisplay.textContent = finalTotal.toFixed(2);
         }
 
-        // 3. Quantity Control (Increment/Decrement)
+        // Quantity Control 
         cartItemsContainer.addEventListener('click', function (e) {
             const btn = e.target.closest('.qty-btn');
             if (!btn) return;
@@ -536,25 +550,13 @@
             updateCartTotal();
         });
 
-        // 4. Checkbox Change listener
         cartItemsContainer.addEventListener('change', function (e) {
             if (e.target.classList.contains('product-select-checkbox')) {
                 updateCartTotal();
             }
         });
 
-        // 5. Checkout Button Logic
-        document.getElementById('checkout-btn').addEventListener('click', function () {
-            const selected = getSelectedItems();
-            if (selected.length === 0) {
-                alert('Please select at least one product to checkout.');
-                return;
-            }
-            document.getElementById('selected-products').value = JSON.stringify(selected);
-            document.getElementById('checkoutForm').submit();
-        });
-
-        // 6. Remove Products Button Logic
+        // Remove Products Button
         document.getElementById('remove-Products-btn').addEventListener('click', function () {
             const selected = getSelectedItems();
             if (selected.length === 0) {
@@ -568,7 +570,6 @@
             }
         });
 
-        // Initial call to set values on load
         updateCartTotal();
 
         const alertBox = document.getElementById('status-alert');
@@ -577,12 +578,107 @@
                 // Smooth fade out effect
                 alertBox.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
                 alertBox.style.opacity = "0";
-                alertBox.style.transform = "translate(-50%, -20px)"; // Slides up slightly while fading
+                alertBox.style.transform = "translate(-50%, -20px)"; 
                 
-                // Remove from DOM after animation
                 setTimeout(() => alertBox.remove(), 600);
             }, 5000);
         }
+
+        //quantity limit check before checkout
+        document.getElementById('checkout-btn').addEventListener('click', function (e) {
+            const selected = getSelectedItems();
+            
+            // Check if anything is selected
+            if (selected.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Empty Selection',
+                    text: 'Please select at least one product to checkout.'
+                });
+                return;
+            }
+
+            // Check for quantity limits
+            let exceedsLimit = false;
+            selected.forEach(item => {
+                if (parseInt(item.qty) > 20) {
+                    exceedsLimit = true;
+                }
+            });
+
+            if (exceedsLimit) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Quantity Limit Exceeded',
+                    text: 'The maximum quantity allowed per item is 20.',
+                    confirmButtonColor: '#ff7675'
+                });
+                return;
+            }
+
+            document.getElementById('selected-products').value = JSON.stringify(selected);
+            document.getElementById('checkoutForm').submit();
+        });
+
+
+
+        let qtyTimer;
+        let isRapidFiring = false;
+        function changeQty(input, action) {
+            let val = parseInt(input.value);
+            if (action === 'increment') {
+                if (val < 20) {
+                    val++;
+                } else {
+                    stopTimer();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Limit reached',
+                        text: 'You can only add up to 20 units of this item.',
+                        position: 'center',
+                        confirmButtonColor: '#ff7675'
+                    });
+                }
+            } else if (action === 'decrement' && val > 1) {
+                val--;
+            }
+            input.value = val;
+            updateCartTotal();
+        }
+
+        function stopTimer() {
+            clearTimeout(qtyTimer);
+            clearInterval(qtyTimer);
+        }
+
+        cartItemsContainer.addEventListener('mousedown', function (e) {
+            const btn = e.target.closest('.qty-btn');
+            if (!btn) return;
+            
+            e.preventDefault(); 
+
+            const input = btn.closest('.cart-item-card').querySelector('.qty-input');
+            const action = btn.dataset.action;
+
+            changeQty(input, action);
+
+            stopTimer(); 
+            qtyTimer = setTimeout(() => {
+                qtyTimer = setInterval(() => {
+                    changeQty(input, action);
+                }, 100);
+            }, 500); 
+        });
+
+        window.addEventListener('mouseup', stopTimer);
+        cartItemsContainer.addEventListener('mouseleave', stopTimer);
+
+        cartItemsContainer.addEventListener('click', function (e) {
+            if (e.target.closest('.qty-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true);
     });
 </script>
 

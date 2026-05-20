@@ -35,7 +35,6 @@ class cartC extends Controller
     /////////////////////////////add to cart functionallity/////////////////////////////
 
     public function addToCart(Request $request){
-        
         $userId=Auth::id();
         $productId=$request->product_id;
         $quantity=1;

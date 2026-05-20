@@ -11,13 +11,13 @@ use App\Http\Controllers\UserReviewC;
 use App\Http\Controllers\Users;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('users/Uhome');
-});
+// Route::get('/', function () {
+//     return view('users.Uhome');
+// });
 
-Route::get('Uhome', function () {
-    return view('users.Uhome');
-});
+// Route::get('Uhome', function () {
+//     return view('users.Uhome');
+// });
 
 Route::get('Ufeatures', function () {
     return view('users.Ufeatures');
@@ -31,6 +31,7 @@ Route::get('Ucontact', function () {
     return view('users.Ucontact');
 });
 
+route::get('/',[Products::class,'viewProducts']);
 route::get('/Uproducts',[Products::class,'viewProducts']);
 
 /////////////////////////////////////////////////////////////////// users signup and login routes//////
@@ -49,7 +50,7 @@ Route::middleware(['auth',])->group(function () {
 
         ///////////// users payments route ////////////////////////
 
-        route::post('users/UplaceOrder',[OrderC::class,'placeOrder']);
+        // route::post('users/UplaceOrder',[OrderC::class,'placeOrder']);
 
         ////////////////////////////////////////////////////////////////
         //logout route
@@ -77,7 +78,7 @@ Route::middleware(['auth',])->group(function () {
         route::post('/Ucart',[CartC::class,'addToCart'])->name('cart.add');         // add to cart
         route::post('users/removeProductsFromCart',[CartC::class,'removeFromCart']);  // remove from cart
 
-        route::post('users/Ucheckout',[Products::class,'paymentDetails']);  // checkout route
+        route::post('users/Ucheckout',[Products::class,'productcheckout']);  // checkout route
         route::post('/users/Ubuyproduct',[OrderC::class,'addressDetails']);  // buy product route
         route::post('/users/returnOrder',[OrderC::class,'returnOrder']);  // return order route
         route::post('users/cancelOrder',[OrderC::class,'cancelOrder']);  // cancel order route
@@ -85,13 +86,22 @@ Route::middleware(['auth',])->group(function () {
         route::post('orders/returnReason',[OrderC::class,'submitreturnReason']);  // return reason order route
         route::get("users/Uview_Orders",[OrderC::class,'userOrders']);  // user view orders route
         route::get('users/Uproduct_details/{id}',[Products::class,'buyProduct']); // product details route
-        route:: post ('users/UsingleProduct',[UserReviewC::class,'singleProductPage']);  // single product page route
+        route:: get ('users/UsingleProduct/',[UserReviewC::class,'singleProductPage']);  // single product page route
         route:: post ('users/review/',[UserReviewC::class,'addReview'])->name('addReview');  // add review route
         route::get('users/help',function(){
             return view('users.help');
         });
         route::post('users/search',[Users::class,'searchproduct']);
 });
+
+// route::post('users/CardPayment',function(){
+//     return view('users.CardPayment');
+// });
+// route::post('users/CardPayment',[OrderC::class,'placeOrder']);
+
+// route::post('UpiPayment/',[OrderC::class,'upiPayment']);
+route::post('users/CodPayment/',[OrderC::class,'placeOrder']);
+route::get('users/CODPayment',[OrderC::class,'showOrderSummary']);
 
         ////////////////////////////////   admin routes  ///////////////////////////////////////////////////////
 
@@ -116,14 +126,14 @@ Route::middleware(['auth',])->group(function () {
         route::get('admin/adminDashboard',[AdminController::class,'adminPanel']);
 
         route::get('admin/Amanageorders',[OrderC::class,'viewOrders']); // add Products
-        route::post("admin/deleteOrder",[AdminController::class,'deleteOrder']); // delete order
-        route::post("admin/orderStatus",[AdminController::class,'updateOrderStatus']); // update order status
+        route::post("admin/deleteOrder/",[AdminController::class,'deleteOrder']); // delete order
+        route::post("/admin/orders/{orderId}/update-status",[AdminController::class,'updateOrderStatus']); // update order status
         Route::POST("Aaddproducts",[Products::class,'addProducts']);// admin view Products
         Route::get('admin/Aproducts', [Products::class, 'index']);
         Route::POST('admin/Aproducts/{id}/toggle', [Products::class, 'toggleStatus']);
 
         route::get('admin/AdminUserManagement',[AdminController::class,'userManagement']);
-        route::post('admin/updateUserStatus',[AdminController::class,'updateUserStatus']);
+        route::post('/admin/users/{userId}/toggle-status',[AdminController::class,'updateUserStatus']);
         route::post('admin/deleteUser',[AdminController::class,'deleteUser']);
         route::post('admin/profile',[AdminController::class,'updateAdminProfile']);
         route::post('admin/logout',[AdminController::class,'adminLogout']);
@@ -132,14 +142,17 @@ Route::middleware(['auth',])->group(function () {
 
         /////////////  edit Products details /////////////////////////////
 
-        // Route::get('admin/AeditProducts/{id}', [Products::class, 'editProducts']);  //   removed because not needed admin edit product
-        // Route::post('admin/AeditProducts/{id}', [Products::class, 'updateProducts']);
+        Route::post('admin/AeditProducts', [Products::class, 'updateProducts']);
 
 
         Route::post('admin/AdeleteProducts/{id}', [Products::class, 'deleteProducts']);
 
         route::get('admin/salesSummary',[AdminController::class,'salesSummary'])->name('admin.dashboard');
 
+});
+
+route::get('admin/sidebar',function(){
+    return view('layouts.adminSidebar');
 });
 
 ///////////////////////////////////  seller routes  ////////////////////////////////////////////////////////////////
@@ -189,11 +202,14 @@ route::post('/seller/logout',[SellerC::class,'sellerLogout']);
 Route::middleware(['auth',] )->group(function () {
 
     route::get('seller/products/',[SellerC::class,'sellerProducts']);
- 
     route::get('seller/orders/',[sellerC::class,'sellerorderedProducts']);
 
-    route::get('seller/sellerEditProduct/{id}',[Products::class,'editProducts']);
-    route::get('seller/sellerDeleteProduct/{id}',[Products::class,'deleteProducts']);
+
+    route::post('/seller/orders/updateStatus/{id}',[sellerC::class,'updateStatus']);
+
+
+    route::post('seller/sellerEditProducts',[Products::class,'editProducts']);
+    route::post('seller/sellerDeleteProduct',[Products::class,'deleteProducts']);
 
     route::get('seller/review/',function(){
         return view('seller.sellerReview');
@@ -234,7 +250,7 @@ Route::middleware(['auth',] )->group(function () {
 
 
 
-    Route::post('/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);
+    // Route::post('/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);
 
     Route::post('/staff/assign-order',[StaffC::class,'assignOrder']);
     Route::post('/staff/deliverOrder',[StaffC::class,'deliverOrder']);

@@ -5,6 +5,7 @@ use App\Models\Product;
 use App\Models\Productimg;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 
 
 class Products extends Controller
@@ -12,21 +13,21 @@ class Products extends Controller
 
  //edit product
 
-    public function editProducts($id)
+    public function editProducts(Request $request)
     {
+        $id = $request->input('productId');
         $products = Product::findOrFail($id);
         $totalProducts = Product::count();  
         if (!$products) {
             return redirect()->back()->withErrors('Product not found.');
         }
-        return view("admin.AeditProducts",compact('products','totalProducts'));
+        return view("seller.sellerEditProducts",compact('products','totalProducts'));
         
     }
 
     /////update product
-    public function updateProducts(Request $request,$id)
+    public function updateProducts(Request $request)
     {
-        
         $request->validate([
             'productName' => 'max:50',
             'category' => 'max:50',
@@ -42,7 +43,8 @@ class Products extends Controller
         }else{
             $status = 0;
         }
-        $product = Product::findOrFail($id);
+        $productId = $request->input('productId');
+        $product = Product::findOrFail($productId);
         $product->update([
             'product_name' => $request->input('productName'),
             'category' => $request->input('category'),
@@ -60,7 +62,7 @@ class Products extends Controller
 
     ///////////////////////////////////////////////////////////
 
-    public function paymentDetails(Request $request)
+    public function productcheckout(Request $request)
     {
         $rawProducts = $request->products;
         $selectedProducts = [];
@@ -71,7 +73,6 @@ class Products extends Controller
             is_array($decoded) &&
             isset($decoded[0]['id'])
         ) {
-            // JSON cart format
             $selectedProducts = $decoded;
 
         } else {
@@ -117,8 +118,18 @@ class Products extends Controller
 
     public function viewProducts()
     {
-        $products = Product::with('images')->where('status', '1')->paginate(20);
-        return view('users.Uproducts',compact('products'));
+        $products = Product::with('images')->where('status', '1')->where('stock', '>', 25)->paginate(20);
+        $productsfornewUsers = Product::with('images')
+            ->where('status', '1')
+            ->where(function($query) {
+                $query->whereJsonContains('type', 'featured')
+                    ->orWhereJsonContains('type', 'new')
+                    ->orWhereJsonContains('type', 'onSale');
+            })
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+        return view('users.Uproducts',compact('products','productsfornewUsers'));
     }
 
     /// display products for admin panel
@@ -145,13 +156,60 @@ class Products extends Controller
         
     }
 
+    // add products
+    public function addProducts(Request $Request)
+    {
+         
+        $Request->validate([
+            'productName' => 'required|max:50',
+            'category' => 'required',
+            'price' => 'required|numeric',
+            'stock' => 'required|integer',
+            'description' => 'required|max:200',
+            'productImages' => 'nullable',
+            'productImages.*' => 'image',
+            'status' => 'required',
+            'type' => 'nullable|array',
+            'type.*' => 'string',
+            'weight' => 'required|numeric',
+        ]);
+
+        $save = Product::create([
+            'product_name' => $Request->productName,
+            'category' => $Request->category,
+            'price' => $Request->price,
+            'stock' => $Request->stock,
+            'description' => $Request->description,
+            'status' => $Request->status,
+            'type' => $Request->type,  
+            'weight' => $Request->weight,
+            'seller_id' => Auth::id(),
+        ]);
+        
+
+        if ($Request->hasFile('productImages')) {                          // for multiple image storage
+            foreach ($Request->file('productImages') as $image) {
+                $imagePath = $image->store('images', 'public');
+
+                Productimg::create([
+                    'product_id' => $save->id,
+                    'image' => $imagePath,
+                ]);
+            }
+        }
+        return redirect()->back()->with('success', 'Product added successfully!');
+    }
+
     ////delete product
 
-    public function deleteProducts($id)
+    public function deleteProducts(Request $request)
     {
+        $id = $request->input('productId');
         $product = Product::findOrFail($id);
         $product->delete();
         return back()->withsuccess("Product deleted successfully!");
+    
+        // return response()->json(['success' => true , 'message' => 'Product deleted successfully!']);
     }
 }
 
@@ -169,45 +227,3 @@ class Products extends Controller
 
 //removed part of admin add product
 
-    // public function addProducts(Request $Request)
-    // {
-         
-    //     $Request->validate([
-    //         'productName' => 'required|max:50',
-    //         'category' => 'required',
-    //         'price' => 'required|numeric',
-    //         'stock' => 'required|integer',
-    //         'description' => 'required|max:200',
-    //         'productImages' => 'nullable',
-    //         'productImages.*' => 'image',
-    //         'status' => 'required',
-    //         'type' => 'nullable|array',
-    //         'type.*' => 'string',
-    //         'weight' => 'required|numeric',
-    //     ]);
-
-    //     $save = Product::create([
-    //         'product_name' => $Request->productName,
-    //         'category' => $Request->category,
-    //         'price' => $Request->price,
-    //         'stock' => $Request->stock,
-    //         'description' => $Request->description,
-    //         'status' => $Request->status,
-    //         'type' => $Request->type,  
-    //         'weight' => $Request->weight,
-    //         'seller_id' => Auth::id(),
-    //     ]);
-        
-
-    //     if ($Request->hasFile('productImages')) {                          // for multiple image storage
-    //         foreach ($Request->file('productImages') as $image) {
-    //             $imagePath = $image->store('images', 'public');
-
-    //             Productimg::create([
-    //                 'product_id' => $save->id,
-    //                 'image' => $imagePath,
-    //             ]);
-    //         }
-    //     }
-    //     return redirect()->back()->with('success', 'Product added successfully!');
-    // }

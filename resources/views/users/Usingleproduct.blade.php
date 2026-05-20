@@ -256,6 +256,7 @@
     </style>
 </head>
 <body>
+    @include('layouts.navbar')
 
     @if (session('success'))
     <div class="custom-alert alert-glass-success" id="auto-close-alert">
@@ -320,17 +321,27 @@
                 </p>
 
                 <div class="d-flex gap-3 mb-5">
-                    <button class="btn btn-gradient btn-lg rounded-pill">
+                    <button class="btn btn-gradient btn-lg rounded-pill" id="add-to-cart-btn" data-product-id="{{$product->id}}">
                         <i class="fas fa-cart-plus me-2"></i> Add to Cart
                     </button>
+
+
                     
-                    <a href="{{ url('/users/Ucheckout?products='.$product->id) }}" class="btn btn-pink-gradient btn-lg rounded-pill">
+                    <button type="submit" class="btn btn-pink-gradient btn-lg rounded-pill" onclick="document.getElementById('buyNow-btn').submit()">
                         <i class="fas fa-bag-shopping me-2"></i> Buy Now
-                    </a>
-                    
-                    <button class="btn btn-outline-light btn-lg rounded-pill">
-                        <i class="far fa-heart"></i>
                     </button>
+
+                    <form action="{{ url('users/Ucheckout') }}" method="POST" id="buyNow-btn">
+                        @csrf
+                        <input type="hidden" name="products" value="{{ $product->id }}">
+                    </form>
+
+
+                    
+                    {{-- <button class="btn btn-outline-light btn-lg rounded-pill">
+                        <i class="far fa-heart"></i>
+                    </button> --}}
+                    
                 </div>
 
                 <hr class="opacity-25">
@@ -340,7 +351,7 @@
 
         <div class="mt-4 p-4 border border-secondary rounded-4">
             <h5 class="mb-3"><i class="fas fa-pen-to-square me-2"></i>Leave a Review</h5>
-            <form method="POST" action="{{route('addReview')}}">
+            <form method="POST" action="{{route('addReview')}}" id="addReview-form">
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">Your Name</label>
@@ -353,7 +364,7 @@
 
                 <div class="mb-3">
                     <label class="form-label d-block">Rate this Product</label>
-                    <div class="rating-input">
+                    <div class="rating-input" id="ratingInput">
                         <input type="radio" id="star5" name="rating" value="5" required /><label for="star5" title="5 stars"></label>
                         <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars"></label>
                         <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars"></label>
@@ -400,23 +411,88 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
     // Auto-close alert after 5 seconds
-    function dismissAlert() {
-        const alert = document.getElementById('auto-close-alert');
-        if (alert) {
-            alert.style.transition = "all 0.4s ease";
-            alert.style.opacity = "0";
-            alert.style.transform = "translateX(50px)";
-            setTimeout(() => alert.remove(), 400);
+
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        function dismissAlert() {
+            const alert = document.getElementById('auto-close-alert');
+            if (alert) {
+                alert.style.transition = "all 0.4s ease";
+                alert.style.opacity = "0";
+                alert.style.transform = "translateX(50px)";
+                setTimeout(() => alert.remove(), 400);
+            }
         }
+
+            const alertExists = document.getElementById('auto-close-alert');
+            if (alertExists) {
+                setTimeout(dismissAlert, 10000);
+            }
+
+        document.getElementById('add-to-cart-btn').addEventListener('click', function() {
+        const productId = this.getAttribute('data-product-id');
+        const token = document.querySelector('input[name="_token"]').value;
+
+        fetch("{{ route('cart.add') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": token
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showCustomAlert('success', data.message);
+            } else {
+                showCustomAlert('error', data.message || 'Could not add to cart.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showCustomAlert('error', 'Something went wrong.');
+        });
+    });
+
+    function showCustomAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `custom-alert alert-glass-${type}`;
+        alertDiv.id = "session-alert";
+        alertDiv.innerHTML = `
+            <div class="alert-icon"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i></div>
+            <div class="alert-content">
+                <h6>${type === 'success' ? 'Success!' : 'Oops!'}</h6>
+                <p>${message}</p>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            alertDiv.style.opacity = "0";
+            setTimeout(() => alertDiv.remove(), 500);
+        }, 5000);
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const alertExists = document.getElementById('auto-close-alert');
-        if (alertExists) {
-            // Auto-dismiss after 10 seconds (10000ms)
-            setTimeout(dismissAlert, 10000);
+    const form = document.getElementById('addReview-form');
+
+    form.addEventListener('submit', function(e){
+
+        const rating = document.querySelector('input[name="rating"]:checked');
+
+        if(!rating){
+
+            e.preventDefault();
+
+            document.getElementById('rating-error').innerText =
+                'Please rate the product before submitting review';
+
+            return;
         }
+
     });
+});
 </script>
 </body>
 </html>

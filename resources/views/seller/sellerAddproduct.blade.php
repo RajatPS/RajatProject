@@ -168,14 +168,14 @@
                 <input type="number" name="stock" placeholder="0" min="0">
             </div>
 
-            <div class="form-group">
+            {{-- <div class="form-group">
                 <label for="stock">Stock Quantity</label>
                 <input type="number" name="stock" placeholder="0" min="0">
-            </div>
+            </div> --}}
 
             <div class="form-group">
-                <label for="weight">Weight (kg) <span class="required">*</span></label>
-                <input type="number" name="weight" placeholder="e.g. 0.5" step="0.01" min="0" required>
+                <label for="weight">Weight (in grams) <span class="required">*</span></label>
+                <input type="number" name="weight" placeholder="e.g. 500" step="0.01" min="0" required>
                 <div class="help-text">Used to calculate shipping costs</div>
             </div>
 

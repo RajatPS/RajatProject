@@ -333,6 +333,136 @@
 <body>
 
 <body>
+    @if(!Auth::check())
+    <div id="page-wrapper">
+        @include('layouts.navbar')
+        
+        <section class="hero-section">
+            <div class="container">
+                <h5 class="hero-title">Our Premium Products</h5>
+            </div>
+        </section>
+
+        <section class="filter-section">
+            <div class="container">
+                <div class="filter-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h5 class="mb-3 mb-md-0 text-white fw-bold">Filter by Category:</h5>
+                        </div>
+                        <div class="col-md-9 text-md-start text-center">
+                            <button class="btn filter-btn active" data-filter="all">All Products</button>
+                            <button class="btn filter-btn" data-filter="Books">Books</button>
+                            <button class="btn filter-btn" data-filter="Note books">Note Books</button>
+                            <button class="btn filter-btn" data-filter="pens">Pens</button>
+                            <button class="btn filter-btn" data-filter="pencils">Pencils</button>
+                            <button class="btn filter-btn" data-filter="sharpners">Sharpners</button>
+                            <button class="btn filter-btn" data-filter="erasers">Erasers</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="products-section">
+            <div class="container">
+                <div class="row g-4" id="productsContainer">
+                    @foreach ($productsfornewUsers as $product)
+                        <div class="col-xl-4 col-lg-6 col-sm-6" data-category="{{ $product->category }}">
+                            <div class="card product-card">
+                                <div class="product-image" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#productDetailModal"
+                                    data-id="{{ $product->id }}" 
+                                    data-product-name="{{ $product->product_name }}"
+                                    data-product-price="₹ {{ $product->price }}"
+                                    data-product-description="{{ $product->description }}"
+                                    data-product-category="{{ $product->category }}"
+                                    data-product-image="{{ asset('storage/'.optional($product->images->first())->image) }}">
+                                    
+                                    <img src="{{ asset('storage/'.optional($product->images->first())->image) }}" alt="{{$product->product_name}}" style="object-fit: contain;">
+                                    <span class="category-badge">{{$product->category}}</span>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{$product->product_name}}</h5> 
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="rating">
+                                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                                            <span class="text-white-50 ms-1 small">(4.5)</span>
+                                        </div>
+                                        <span class="price-tag">₹ {{$product->price}}</span> 
+                                    </div>
+                                    <p class="card-text text-truncate">{{$product->description}}</p>
+                                    <button type="button" class="btn btn-product mt-auto" onclick="window.location.href='{{ url('users/Ulogin') }}'">
+                                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content product-modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <div id="modalImageCarousel" class="carousel slide product-image-large">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active">
+                                        <img src="" id="modal-image-main" class="d-block w-100" alt="Product Image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <h2 class="modal-title-text" id="modal-product-name"></h2>
+                            <span class="category-badge-modal" id="modal-product-category"></span>
+                            
+                            <hr class="my-3 modal-divider">
+                            <h3 class="price-tag-modal" id="modal-product-price"></h3>
+                            
+                            <div class="rating my-3">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                                <span class="text-white-50 ms-1 small">(4.5)</span>
+                            </div>
+
+                            <p class="modal-product-description" id="modal-product-description"></p>
+                            <hr class="my-3 modal-divider">
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary modal-button1 w-100" onclick="window.location.href='{{ url('users/Ulogin') }}'">
+                                    <i class="bi bi-bag-fill me-2"></i> Buy Now
+                                </button>
+
+                                <button type="submit" class="btn btn-primary modal-button1 w-100" onclick="window.location.href='{{ url('users/Ulogin') }}'">
+                                    <i class="bi bi-cart-plus me-2"></i> Add to Cart
+                                </button>
+                                
+                                <button type="submit" class="btn modal-button3 w-100" onclick="window.location.href='{{ url('users/Ulogin') }}'">
+                                    <i class="fas fa-eye me-2"></i> view product
+                                </button>
+                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @include('layouts.footer')
+        
+    @else
+
     @include('layouts.messages')
     @include('layouts.ajaxMsg')
     
@@ -453,7 +583,7 @@
                                     <i class="bi bi-cart-plus me-2"></i> Add to Cart
                                 </button>
                                 
-                                <form id="viewProductForm" method="POST" action="{{ url('users/UsingleProduct') }}">
+                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct?product_id=' . $product->id) }}">
                                     @csrf
                                     <input type="hidden" name="product_id" id="modal-input-id-view">
                                     <button type="submit" class="btn modal-button3 w-100">
@@ -469,6 +599,8 @@
     </div>
 
     @include('layouts.footer')
+
+    @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 

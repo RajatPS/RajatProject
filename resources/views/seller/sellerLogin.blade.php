@@ -188,7 +188,7 @@
         </div>
         
         <div class="login-body">
-            <form method="POST" action="/seller/login">
+            <form method="POST" action={{url('seller/login/')}}>
                 @csrf
                 <div class="form-floating">
                     <input type="email" class="form-control" name="login_email" id="floatingInput" placeholder="name@example.com" required>

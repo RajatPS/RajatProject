@@ -29,32 +29,47 @@ class AdminController extends Controller
     
 
     public function deleteUser(Request $request){
-        $userId = $request->input('userId');    //for all types of data use input() method
-        $user=User::where('id', $userId)->where('role', '!=', ['admin', 'seller'])->first(); 
+        $userId = $request->input('user_id');    
+        $user=User::where('id', $userId)->whereNotIn('role', ['admin'])->first(); 
         if ($user) {
             $user->delete();
+            return response()->json([
+            'success' => true,
+            'message' => 'User deleted successfully.'
+        ]);
         }
-        return back();
-    }
-
-    public function updateUserStatus(Request $request){
-        // dd($request->all());
-        $userId = $request->input('user_id'); 
-        $newStatus = $request->input('status');
-
-        $user = User::where('id', $userId)->where('role', '!=', ['admin', 'seller'])->first();
-        if ($user) {
-            $user->account_status = $newStatus;
-            $user->save();
-            return back()->with('success', 'User status updated successfully.');
-        } else {
-            return back()->withErrors(['error' => 'User not found.']);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found or cannot be deleted.'
+        ], 404);
         
     }
 
+    public function updateUserStatus($userId)
+    {
+        $user = User::where('id', $userId)
+                    ->whereNotIn('role', ['admin'])
+                    ->first();
+
+        if ($user) {
+            $newStatus = ($user->account_status === 'active') ? 'inactive' : 'active';
+            $user->account_status = $newStatus;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User status updated successfully.'
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found or status cannot be modified.'
+        ], 404);
+    }
+
+
     public function userManagement(){
-        $users = User::whereNotIn('role', ['admin', 'seller'])->get();
+        $users = User::whereNotIn('role', ['admin'])->get();
         return view('admin/AdminUserManagement', compact('users'));
     }
 
@@ -72,10 +87,6 @@ class AdminController extends Controller
 
 
     public function salesSummary(){
-        // if(!session()->has('adminName')){
-        //     return redirect('admin/adminlogin');
-        // }
-
 
         $totalProducts= Product::count();
         $currentYear = date('Y');
@@ -103,27 +114,30 @@ class AdminController extends Controller
             ];
         }
 
-        // dd($totalSales, $totalOrders, $totalProducts, $totalUsers);
 
         return view('admin/salesSummary', compact('totalProducts', 'currentYear', 'data'));
     }
 
     public function deleteOrder(Request $request){
-        $orderId = $request->input('orderId');
-        
-        Order::destroy($orderId);
-        return back();
+        $id = $request->input('id');
+        $product = Order::find($id);
+        if (!$product) {
+            return response()->json(['success' =>'False' , 'message' => 'Order not found.']);
+        }
+        Order::destroy($id);
+        return response()->json(['success' =>'True' , 'message' => 'Order deleted successfully.']);
     }
 
-    public function updateOrderStatus(Request $request){
-        $orderId = $request->order_id;
-        $status = $request->status;
-        $order = Order::find($orderId)->first();
+    public function updateOrderStatus( Request $request){
+       $orderId = $request->route('orderId');
+       $status = $request->input('status');
+        $order = Order::find($orderId);
         if ($order) {
             $order->status = $status;
             $order->save();
-            return back()->with('success', 'Order status updated successfully.');
+            return response()->json(['success' => true, 'message' => 'Order status updated successfully.']);
         }
+        return response()->json(['success' =>'false', 'message' => 'Order not found.'], 404);
     }
 
 

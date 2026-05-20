@@ -315,9 +315,8 @@
             </table>
         </div>
     </div>
-@endsection
+
 <script>
-// FUNCTION 1: Only handles the QR Code
 function generateQROnly(btnElement, orderId) {
     const actionCell = btnElement.closest('.action-cell');
     const productId = actionCell.querySelector('.product-id').value;
@@ -329,7 +328,6 @@ function generateQROnly(btnElement, orderId) {
     console.log("QR Generated for Order:", orderId);
 }
 
-// FUNCTION 2: Only handles the Database Update
 function updateStatusOnly(orderId, newStatus) {
     Swal.fire({
         title: 'Updating Status...',
@@ -337,7 +335,7 @@ function updateStatusOnly(orderId, newStatus) {
         didOpen: () => { Swal.showLoading(); }
     });
 
-    fetch(`/orders/updateStatus/${orderId}`, {
+    fetch(`/seller/orders/updateStatus/${orderId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -358,6 +356,7 @@ function updateStatusOnly(orderId, newStatus) {
         Swal.fire('Error', 'Server connection failed.', 'error');
     });
 }
+
 function switchTab(tabName) {
     const pendingSec = document.getElementById('pending-section');
     const confirmedSec = document.getElementById('confirmed-section');
@@ -377,3 +376,4 @@ function switchTab(tabName) {
     }
 }
 </script>
+@endsection

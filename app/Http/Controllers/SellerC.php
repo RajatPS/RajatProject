@@ -13,19 +13,25 @@ use Twilio\Rest\Client;
 
 class SellerC extends Controller
 {
-public function updateStatus(Request $request, $id) {
+    public function updateStatus(Request $request){ 
+         $id = $request->route('id');
+         // dd($request->all());                            
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Received data: ' . json_encode($request->all()),
+        // ]);
+        $orderId = $id;
+        $status = $request->input('status');
+        $order = Order::findOrFail($orderId);
+        $order->status = $status;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully'
+        ]);
     
-    $order = Order::findOrFail($id);
-    $order->status = $request->status;
-    $order->save();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Status updated successfully'
-    ]);
-}
-
-
+    }
 
 
     public function sellerLogout(Request $request){
@@ -49,7 +55,7 @@ public function updateStatus(Request $request, $id) {
     }
 
     public function sellerOrderedProducts(){
-        $products=Product::with('images','orders')->where('seller_id',Auth::id())->get();
+        $products=Product::with('images','orders')->where('seller_id',Auth::id())->latest()->get();
         // dd($products);
         return view('seller.sellerOrders',compact('products'));
     }
@@ -66,15 +72,16 @@ public function updateStatus(Request $request, $id) {
         $request->validate([
             'seller_phone' => 'required',
         ]);
+        $fullPhoneNumber = '+91' . $request->seller_phone;
 
-        if(User::where('phone_number',$request->seller_phone)->exists()){
+        if(User::where('phone_number',$fullPhoneNumber)->where('role', 'seller')->exists()){
             return redirect('seller/sellerLogin')->with(['seller_phone' => 'Phone number already registered. Please log in.']);
         }
         else{
             $otp = rand(100000, 999999);
             session([
                 'otp' => $otp,
-                'phone' => $request->seller_phone,
+                'phone' => $fullPhoneNumber,
                 'otp_source' => 'seller'
             ]);
 
@@ -83,7 +90,7 @@ public function updateStatus(Request $request, $id) {
             $from = config('services.twilio.from');
             $twilio = new Client($sid, $token);
             $twilio->messages->create(
-                $request->seller_phone, // must be like +91XXXXXXXXXX
+                $fullPhoneNumber, 
                 [
                     'from' => $from,
                     'body' => "Your OTP is: $otp"
@@ -119,10 +126,17 @@ public function updateStatus(Request $request, $id) {
 
   
     public function sellerDetails(Request $request){
-        $request->validate([
-            'name'=>'required|string|max:255',
+        // dd($request->all());
+        try {
+            $request->validate([
+            'name'=>'required|string|max:50',
             'email' => 'required|email|unique:Users,email',
+            'password' => 'required|min:2|confirmed',
         ]);
+        }
+        catch(\Illuminate\Validation\validationException $e){
+            return back()->withErrors($e->validator)->withInput();  
+        }
 
         if (!session('otp_verified')) {
             return redirect('seller/sellerMatchOTP')->withErrors(['otp' => 'Please verify your OTP first.']);
@@ -136,6 +150,7 @@ public function updateStatus(Request $request, $id) {
             'password' => bcrypt($request->password),
             'phone_number' => $seller_phone,
             'role' => 'seller',
+            'account_status' => 'active',
         ]);
 
         Auth::login($data);
@@ -147,10 +162,12 @@ public function updateStatus(Request $request, $id) {
 
     public function sellerLogin(Request $request)
     {
+        
         $credentials = $request->validate([
             'login_email' => 'required|email',
             'login_password' => 'required',
         ]);
+        
 
         if (!Auth::attempt([
             'email' => $credentials['login_email'],

@@ -19,6 +19,9 @@
             --dark-text-color: #333;
             --light-text-color: #ffffff;
             --table-header-bg: linear-gradient(90deg, #536fae, #624b89);
+            
+            /* Match these to your Sidebar variables */
+            --sidebar-width: 250px; 
         }
 
         * {
@@ -30,13 +33,24 @@
 
         body {
             background: var(--primary-gradient); 
-            padding: 20px;
             min-height: 100vh;
         }
 
+        /* NEW: Wrapper to hold sidebar and content */
+        .dashboard-wrapper {
+            display: flex;
+        }
+
+        /* NEW: Main content area shifted to the right */
+        .main-content {
+            margin-left: var(--sidebar-width); 
+            width: calc(100% - var(--sidebar-width));
+            padding: 40px 20px;
+            transition: all 0.3s ease;
+        }
+
         .dashboard-container {
-            max-width: 95%;
-            margin: 0 auto;
+            width: 100%;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
@@ -45,6 +59,7 @@
             padding: 30px;
         }
 
+        /* ... Rest of your existing styles ... */
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -53,10 +68,7 @@
         }
 
         .header-container h1 {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: white; /* Changed from transparent to show better on purple */
             font-size: 2.2rem;
             margin-bottom: 5px;
         }
@@ -111,25 +123,13 @@
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.85rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
 
         .users-table td {
             color: var(--light-text-color);
             padding: 15px 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            vertical-align: middle;
         }
-
-        .users-table tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.25); 
-        }
-
-        .username { font-weight: 600; }
-        .userid { color: rgba(255, 255, 255, 0.7); }
-        .useremail { color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; }
 
         .actions-cell button {
             padding: 8px 12px;
@@ -137,58 +137,12 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            color: var(--light-text-color); 
+            color: white;
         }
 
         .status-btn { background: var(--accent-gradient); }
-        .delete-btn { background-color: var(--dark-reddish-pink); }
-
-        /* Modal Styling */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); 
-        }
-
-        .modal-content {
-            background: #fff; /* Solid background for readability */
-            border-radius: 10px;
-            margin: 10% auto;
-            padding: 30px;
-            max-width: 400px;
-            text-align: center;
-            color: var(--dark-text-color);
-            position: relative;
-        }
-
-        .modal-content select {
-            width: 100%;
-            padding: 10px;
-            margin: 20px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .save-status-btn {
-            background: var(--accent-gradient);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 10px; right: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #333;
+        .delete-btn { background-color: var(--dark-reddish-pink); 
+            margin-top: 5px;    
         }
 
         .back-btn {
@@ -200,205 +154,194 @@
             color: var(--light-text-color);
             border-radius: 8px;
             text-decoration: none;
-            transition: background-color 0.3s;
-            white-space: nowrap;
-            height: fit-content;
         }
 
-        .back-btn:hover {
-            background-color: var(--reddish-pink-color);
+        /* Responsive Fix */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
         }
-
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header-container">
-            <div>
-                <h1><i class="fas fa-users"></i> Manage Users</h1>
-                <p>Administration panel for user accounts and permissions.</p>
-            </div>
-
-            <a href="javascript:history.back()" class="back-btn">
-                Back to Dashboard 
-                <i class="fas fa-arrow-left"></i>
-            </a>
-        </div>
-
-        <div class="search-section">
-            <input type="text" id="userSearch" placeholder="Search by name, email, address..." onkeyup="filterTable()">
-            <i class="fas fa-search search-icon"></i>
-        </div>
-
-        <div class="table-wrapper">
-            <table class="users-table" id="usersTable">
-                <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>User Details</th>
-                        <th>Phone</th>
-                        <th>Address</th>
-                        <th>DOB</th>
-                        <th>Gender</th>
-                        <th>Last Seen</th>
-                        <th>Account Created</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($users as $user)
-                    <tr>
-                        <td>{{$user->id}}</td>
-                        <td>
-                            <span class="username">{{$user->name}}</span><br>
-                            <span class="useremail">{{$user->email}}</span>
-                        </td>
-                        <td>{{$user->phone_number}}</td>
-                        <td>
-                            <div class="address-box">
-                                <span class="address-city">{{$user->address}}</span><br>
-                                <span class="address-pin">{{$user->zip}}</span>
-                            </div>
-                        </td>
-                        <td>{{$user->DOB}}</td>
-                        <td>{{$user->gender}}</td>
-                        <td>{{$user->LastSeen}}</td>
-                        <td>{{$user->created_at}}</td>
-                        <td>{{$user->account_status}}</td>
-                        <td class="actions-cell">
-                            <button class="status-btn" onclick="openUserModal('{{$user->id}}', '{{$user->account_status}}')">
-                                <i class="fas fa-user-shield"></i> Status
-                            </button>
-                            <button type="button" class="delete-btn" onclick="deleteUser('{{$user->id}}')">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
     
-    <div id="userModal" class="modal">
-      <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h2>Update User Status</h2>
-        <p>Updating ID: <span id="displayUserId" style="font-weight: bold;"></span></p>
-        <select id="newUserStatus">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-            <option value="blocked">Blocked</option>
-            <option value="banned">Banned</option>
-        </select>
-        <button type="button" onclick="updateUserStatus()" class="save-status-btn">Save Changes</button>
-      </div>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar included here -->
+        @include('layouts.adminSidebar')
+
+        <!-- Main Content wrapped in the shifting container -->
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="header-container">
+                    <div>
+                        <h1><i class="fas fa-users"></i> Manage Users</h1>
+                        <p>Administration panel for user accounts and permissions.</p>
+                    </div>
+                </div>
+
+                <div class="search-section">
+                    <input type="text" id="userSearch" placeholder="Search by name, email, address..." onkeyup="filterTable()">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="users-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>User Details</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>DOB</th>
+                                <th>Gender</th>
+                                <th>Last Seen</th>
+                                <th>Account Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($users as $user)
+                            <tr>
+                                <td>{{$user->id}}</td>
+                                <td>
+                                    <span class="username" style="font-weight: bold;">{{$user->name}}</span><br>
+                                    <span class="useremail" style="opacity: 0.8; font-size: 0.85rem;">{{$user->email}}</span>
+                                </td>
+                                <td>{{$user->phone_number}}</td>
+                                <td>{{$user->address}}</td>
+                                <td>{{$user->DOB}}</td>
+                                <td>{{$user->gender}}</td>
+                                <td>{{$user->LastSeen}}</td>
+                                <td>{{$user->created_at}}</td>
+                                <td>{{$user->account_status}}</td>
+                                <td class="actions-cell">
+                                    <button class="status-btn" onclick="openUserModal('{{$user->id}}', '{{$user->account_status}}')">
+                                        <i class="fas fa-user-shield"></i> Status
+                                    </button>
+                                    <button type="button" class="delete-btn" onclick="deleteUser('{{$user->id}}')">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const modal = document.getElementById("userModal");
 
         function openUserModal(userId, currentStatus) {
-            document.getElementById("displayUserId").textContent = userId;
-            document.getElementById("newUserStatus").value = currentStatus;
-            modal.style.display = "block";
-        }
-
-        function closeModal() {
-            modal.style.display = "none";
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) closeModal();
-        }
-
-        // Renamed and updated Delete function using SweetAlert2
-        function deleteUser(userId) {
             Swal.fire({
-                title: "Remove User?",
-                text: "All data associated with this user will be deleted!",
-                icon: "warning",
+                title: 'Change User Status',
+                text: `Current status: ${currentStatus}`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: "#ff4783",
-                cancelButtonColor: "#667eea",
-                confirmButtonText: "Yes, delete user!"
+                confirmButtonText: currentStatus === 'active' ? 'Deactivate User' : 'Activate User',
+                cancelButtonText: 'Cancel',
+                background: '#fff',
+                color: '#333',
+                customClass: {
+                    popup: 'swal2-border-radius'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = "/admin/deleteUser"; // Updated endpoint
-
-                    const csrf = document.createElement("input");
-                    csrf.type = "hidden";
-                    csrf.name = "_token";
-                    csrf.value = "{{ csrf_token() }}";
-
-                    const idInput = document.createElement("input");
-                    idInput.type = "hidden";
-                    idInput.name = "userId"; // Updated name
-                    idInput.value = userId;
-
-                    form.appendChild(csrf);
-                    form.appendChild(idInput);
-                    document.body.appendChild(form);
-                    form.submit();
+                    fetch(`/admin/users/${userId}/toggle-status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ userId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', data.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'An error occurred while updating status.', 'error');
+                    });
                 }
             });
         }
 
-        // Updated Status Change function
-        function updateUserStatus(){
-            const userId = document.getElementById("displayUserId").textContent;
-            const status = document.getElementById("newUserStatus").value;
-
+        function deleteUser(userId) {
             Swal.fire({
-                title: "Update Status?",
-                text: `Change user status to ${status}?`,
-                icon: "question",
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: "Confirm Update"
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, keep it',
+                background: '#fff',
+                color: '#333',
+                customClass: {
+                    popup: 'swal2-border-radius'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = "{{ url('admin/updateUserStatus') }}"; // Updated endpoint
-
-                    const csrf = document.createElement("input");
-                    csrf.type = "hidden";
-                    csrf.name = "_token";
-                    csrf.value = "{{ csrf_token() }}";
-
-                    const idInput = document.createElement("input");
-                    idInput.type = "hidden";
-                    idInput.name = "user_id";
-                    idInput.value = userId;
-
-                    const statusInput = document.createElement("input");
-                    statusInput.type = "hidden";
-                    statusInput.name = "status";
-                    statusInput.value = status;
-
-                    form.append(csrf, idInput, statusInput);
-                    document.body.appendChild(form);
-                    form.submit();
+                    fetch('/admin/deleteUser', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ user_id: userId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Deleted!', data.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'An error occurred while deleting the user.', 'error');
+                    });
                 }
             });
         }
 
         function filterTable() {
-            let input = document.getElementById("userSearch");
-            let filter = input.value.toUpperCase(); 
-            let table = document.getElementById("usersTable");
-            let tr = table.getElementsByTagName("tr");
+            const input = document.getElementById('userSearch');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
 
-            for (let i = 1; i < tr.length; i++) {
-                let rowText = tr[i].textContent || tr[i].innerText;
-                tr[i].style.display = rowText.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+
+                for (let j = 0; j < cells.length - 1; j++) { 
+                    if (cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = match ? '' : 'none';
             }
         }
+
+        
     </script>
 </body>
 </html>

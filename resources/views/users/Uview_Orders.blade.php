@@ -530,7 +530,7 @@
                             </td>
                             
                             <td class="item-name">
-                                <a href="{{ url('users/UsingleProduct/'.$order->product->id) }}" class="product-detail-link">
+                                <a href="{{ url('users/UsingleProduct?product_id='.$order->product->id) }}" class="product-detail-link">
                                     {{ $order->product->product_name }}
                                 </a>
                             </td>
@@ -540,19 +540,19 @@
                             <td class="item-price">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>₹{{ number_format($order->totalAmount, 2) }}</span>
-                                    <a href="{{ url('users/UsingleProduct/'.$order->product->id) }}" class="btn-view-detail">
+                                    <a href="{{ url('users/UsingleProduct?product_id=' . $order->product->id) }}" class="btn-view-detail">
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
                                 </div>
                             </td>
                             <td>
                                 <div class="action-buttons-wrapper">
-                                    <a href="{{ url('users/UsingleProduct/'.$order->product->id) }}" class="btn-glass-custom btn-view-product">
+                                    <a href="{{ url('users/UsingleProduct?product_id=' . $order->product->id) }}" class="btn-glass-custom btn-view-product">
                                         <i class="fas fa-eye"></i>
                                         View Item
                                     </a>
-
                                     @if($order->can_cancel)
+                                        @if($order->status === 'Pending' || $order->status === 'Confirmed')
                                         <form action="{{ url('users/cancelOrder')}}" method="POST" class="m-0">
                                             @csrf
                                             <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -561,8 +561,10 @@
                                                 Cancel
                                             </button>
                                         </form>
+                                        @endif
                                     @endif
                                     @if($order->can_return)
+                                        @if($order->status === 'delivered')
                                         <form action="{{ url('users/returnOrder')}}" method="POST" class="m-0">
                                             @csrf
                                             <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -571,6 +573,7 @@
                                                 Return
                                             </button>
                                         </form>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

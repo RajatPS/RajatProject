@@ -114,7 +114,7 @@
             <i class="fas fa-shopping-cart"></i> <span>Orders</span>
         </a>
 
-        <a href="/seller/analytics" class="menu-item {{ Request::is('seller/analytics*') ? 'active' : '' }}">
+        {{-- <a href="/seller/analytics" class="menu-item {{ Request::is('seller/analytics*') ? 'active' : '' }}">
             <i class="fas fa-chart-line"></i> <span>Analytics</span>
         </a>
 
@@ -128,7 +128,7 @@
 
         <a href="/seller/settings" class="menu-item {{ Request::is('seller/settings*') ? 'active' : '' }}">
             <i class="fas fa-cog"></i> <span>Settings</span>
-        </a>
+        </a> --}}
     </div>
 
     <div class="sidebar-footer">

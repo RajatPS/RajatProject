@@ -56,7 +56,6 @@ class OrderC extends Controller
 
     public function cancelOrder(Request $Request){
         $order_id= $Request->order_id;
-        // dd(Auth::id());
         $check_order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -79,6 +78,7 @@ class OrderC extends Controller
             ///////check if can be cancelled or not
             foreach ($orders as $order) {
                 $order->can_cancel = Carbon::parse($order->order_date)->addHours(24)->isFuture();
+                $order->status= ucfirst($order->status);
             }
             //check if can be returned or not
             foreach ($orders as $order) {
@@ -101,6 +101,7 @@ class OrderC extends Controller
         }
     $productIds = collect($products)->pluck('id')->toArray();
 
+    $cart = [];
     foreach($products as $item){
         if (!isset($item['id'], $item['qty'])) {
             continue;
@@ -119,93 +120,106 @@ class OrderC extends Controller
 
 
 
-        ////plaace order function
-        public function placeOrder(Request $request){ 
 
-            //fetch product ids and qty from session
-            $products = session('checkout_cart');
 
-                if (!$products || count($products) === 0) {
-                return redirect()->back()->with('error', 'Your cart is empty.');
+        ////place order function
+    public function placeOrder(Request $request) {
+        $products = session('checkout_cart');
+
+        if (!$products || count($products) === 0) {
+            return redirect()->back()->with('error', 'Your cart is empty.');
+        }
+
+        $request->merge([
+            'user_phone_number' => preg_replace('/\s+/', '', $request->user_phone_number)
+        ]);
+
+        // Validation (Ensure your inputs are correct)
+        $request->validate([
+            'user_name' => 'required',
+            'user_email' => 'required|email',
+            'user_phone_number' => 'required',
+            'user_address' => 'required',
+            'paymentType' => 'required',
+        ]);
+
+        $orderInfo = [];
+        $skippedProducts = []; 
+
+        foreach ($products as $item) {
+            $id = $item['product_id'];
+            $productQty = $item['qty'];
+            $product = Product::find($id);
+
+            // --- THE SKIP LOGIC ---
+            if (!$product || $product->stock < $productQty) {
+                $skippedProducts[] = $product ? $product->product_name : "Unknown Product (ID: $id)";
+                continue;
             }
-            $request->merge([
-                'user_phone_number' => preg_replace('/\s+/', '', $request->user_phone_number)  //to merge and remove spaces from contact number
+
+            // Calculations 
+            $taxRate = 0.05;
+            $subtotal = $product->price * $productQty;
+            $shippingFee = ($productQty < 10) ? ($productQty * 10) : ($productQty * 5);
+            $totalAmount = $subtotal + ($subtotal * $taxRate) + $shippingFee;
+
+            // Create the order row
+            $save = Order::create([
+                'user_id'        => Auth::id(),
+                'product_id'     => $id,
+                'fullname'       => $request->user_name,
+                'email'          => $request->user_email,
+                'address'        => $request->user_address,
+                'address2'       => $request->user_address2,
+                'city'           => $request->user_city,
+                'state'          => $request->user_state,
+                'zip'            => $request->user_zip,
+                'paymentMethod'  => $request->paymentType,
+                'quantity'       => $productQty,
+                'totalAmount'    => $totalAmount,
+                'cardName'       => $request->cardName,
+                'cardNumber'     => $request->cardNumber,
+                'expmonth'       => $request->expMonth,
+                'expyear'        => $request->expYear,
+                'cvv'            => $request->cvv,
+                'upi'            => $request->upi,
+                'contact_number' => $request->user_phone_number,
+                'status'         => 'Pending',
+                'order_date'     => now()->toDateString(),
+                'order_time'     => now()->toTimeString(),
             ]);
-            $validated = $request->validate([
-                'user_name' => 'required|max:50',
-                'user_email' => 'required|email',
-                'user_phone_number' => 'required|digits_between:9,13',
-                'user_address' => 'required',
-                'user_address2' => 'nullable',
-                'user_city' => 'required',
-                'user_state' => 'required',
-                'user_zip' => 'required',
-                'paymentType' => 'required',
-                // 'productQuantity' => 'required',
-                // 'totalAmount' => 'required',                         fetched from session
-                'cardNumber' => 'required_if:paymentType,card',
-                'cardName' => 'required_if:paymentType,card',
-                'expMonth' => 'required_if:paymentType,card',
-                'expYear' => 'required_if:paymentType,card',
-                'cvv' => 'required_if:paymentType,card',
-                'upi' => 'required_if:paymentType,upi',
-            ]);
-            
 
-            foreach ($products as $item) {
-                $totalAmount = 0;
-                $productQty = $item['qty'];
-                $id = $item['product_id'];
+            $product->decrement('stock', $productQty);
 
-                $product = Product::find($id);
-                if ($product) {
-                    $tax = 0.05;
-                    $subtotal = $product->price * $productQty;
-                    $total = $subtotal * $tax;
+            $orderInfo[] = [
+                'order_id' => $save->id,
+                'product_name' => $product->product_name,
+                'quantity' => $productQty,
+                'total_amount' => $totalAmount,
+            ];
+        }
 
-                    if($productQty < 10){
-                        $shippingFee = $productQty * 10;
-                    }else{
-                        $shippingFee = $productQty * 5;
-                    }
-                    $shippingFee = $shippingFee;
+        if (empty($orderInfo)) {
+            return redirect()->back()->with('error', 'None of the items could be ordered due to insufficient stock.');
+        }
 
-                    $totalAmount = $subtotal + $total + $shippingFee;
-                }
+        session()->put('orderInfo', $orderInfo);
+        session()->put('payment_method', $request->paymentType);
 
+        // Prepare a message if some items were skipped
+        if (!empty($skippedProducts)) {
+            $message = "Order placed successfully! However, the following items were skipped due to stock issues: " . implode(', ', $skippedProducts);
+            return redirect('users/CODPayment')->with('success', $message);
+        }
 
-                if(!$product || $product->stock < $productQty){
-                    return back()->with('error', 'Product is out of stock or insufficient quantity.');
-                }
-                else{
-                    $save = Order::create([
-                        'user_id'=>Auth::id(),
-                        'product_id'=>$id,
-                        'fullname'=>$request->user_name,
-                        'email'=>$request->user_email,
-                        'address'=>$request->user_address,
-                        'address2'=>$request->user_address2,
-                        'city'=>$request->user_city,
-                        'state'=>$request->user_state,
-                        'zip'=>$request->user_zip,
-                        'paymentMethod'=>$request->paymentType,
-                        'quantity'=>$productQty,
-                        'totalAmount'=>$totalAmount,             ////////////fix it later
-                        'cardName'=>$request->cardName,
-                        'cardNumber'=>$request->cardNumber,
-                        'expmonth'=>$request->expMonth,
-                        'expyear'=>$request->expYear,
-                        'cvv'=>$request->cvv,
-                        'upi'=>$request->upi,
-                        'contact_number'=>$request->user_phone_number,
-                        'status'=>'Pending',
-                        'order_date' => now()->toDateString(),
-                        'order_time' => now()->toTimeString(), 
-                    ]); 
-                    $product->decrement('stock', $productQty);
-                    return redirect('/Uproducts')->with('success','Order Placed Successfully');
-                }
-            }
+        return redirect('users/CODPayment');
+    }
+
+        
+
+        public function showOrderSummary(Request $request){
+            return view('users.CODPayment');
+
         }
 
 //////////////////////////////////////////////////////////////////

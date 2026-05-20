@@ -100,13 +100,14 @@
     </header>
 
     <div class="order-filters">
-        <button class="filter-btn active">All Orders</button>
-        <button class="filter-btn">In Processing</button>
-        <button class="filter-btn">Shipped</button>
-        <button class="filter-btn">Delivered</button>
-        <button class="filter-btn">Returned/Disputed</button>
+        <button class="filter-btn active" data-status="all">All Orders</button>
+        <button class="filter-btn" data-status="Pending">In Processing</button>
+        <button class="filter-btn" data-status="Confirmed">Shipping</button>
+        <button class="filter-btn" data-status="Delivered">Delivered</button>
+        <button class="filter-btn" data-status="Cancelled">Returned/Disputed</button>
     </div>
 
+   
     <div class="table-wrapper">
         <table class="seller-table">
             <thead>
@@ -123,7 +124,7 @@
             <tbody>
                 @foreach($products as $product)
                     @foreach($product->orders as $order)
-                        <tr>
+                        <tr class="order-row">
                             <td>
                                 <strong>Order Id:{{ $order->id }}</strong> <br>
                                 <strong>Product Id: {{ $order->product_id }}</strong>
@@ -138,7 +139,20 @@
                             <td>₹{{ number_format($order->totalAmount, 2) }}</td>
                             <td><span class="badge bg-shipped">{{ $order->status }}</span></td>
                             <td>
-                                <button title="View Details"><i class="fas fa-eye"></i></button>
+                                @if($order->status === 'Pending')
+                                <button title="Alter Status" 
+                                        id="alter-btn" 
+                                        onclick="openStatusChangeModal('{{ $order->id }}', '{{ $order->status }}')">
+                                    <i class="fas fa-toggle-on"></i>
+                                </button>
+                                @elseif($order->status === 'Confirmed')
+                                <button title="Generate QR" 
+                                        id="QR-btn" 
+                                        onclick="generateQRCode('{{ $order->id }}')">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                                @endif
+
                                 <button title="Print Label"><i class="fas fa-print"></i></button>
                             </td>
                         </tr>
@@ -148,3 +162,132 @@
         </table>
     </div>
 @endsection
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.0/sweetalert2.all.min.js"></script>
+<script>
+
+    function openStatusChangeModal(orderId, currentStatus) {
+        Swal.fire({
+            title: 'Change Order Status',
+            input: 'select', 
+            
+            inputOptions: {
+                'Confirmed': 'Confirm',
+                'Cancelled': 'Cancel'
+            },
+            
+            inputValue: currentStatus, 
+
+            icon: 'question',
+            inputAutoFocus: true,
+            inputPlaceholder: 'Select status',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm & Change Status',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You must select a new status!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const selectedStatus = result.value;
+                console.log(orderId, selectedStatus);
+
+                const formData = new FormData();
+
+                formData.append('orderId', orderId);
+                formData.append('status', selectedStatus);
+
+                fetch('/seller/orders/updateStatus/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        status: selectedStatus,
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Updated!', data.message, 'success').then(() => {
+                            location.reload(); 
+                        });
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'An internal routing issue occurred.', 'error');
+                });
+            }
+        });
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        const orderRows = document.querySelectorAll(".order-row");
+
+        filterButtons.forEach(button => {
+            button.addEventListener("click", function () {
+                filterButtons.forEach(btn => btn.classList.remove("active"));
+                this.classList.add("active");
+
+                const targetStatus = this.getAttribute("data-status");
+
+                orderRows.forEach(row => {
+                    const statusBadge = row.querySelector("td .badge");
+                    
+                    if (!statusBadge) return;
+                    
+                    const rowStatusText = statusBadge.textContent.trim();
+
+                    if (targetStatus === "all" || rowStatusText === targetStatus) {
+                        row.style.display = ""; 
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+        });
+    });
+
+
+    function generateQRCode(orderId) {
+        Swal.fire({
+            title: `QR Code for Order #${orderId}`,
+            html: `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px;">
+                    <div id="qrcode-target"></div>
+                    <p style="margin-top: 15px; font-weight: 600; color: #555;">Scan to manage or verify order parameters</p>
+                </div>
+            `,
+            showConfirmButton: true,
+            confirmButtonText: 'Close',
+            confirmButtonColor: '#3085d6',
+            
+            didOpen: () => {
+                const container = document.getElementById('qrcode-target');
+                
+                new QRCode(container, {
+                    text: String(orderId), // What information the QR code contains (your order ID)
+                    width: 200,            // Output image width in pixels
+                    height: 200,           // Output image height in pixels
+                    colorDark : "#000000", // Foreground block hex color
+                    colorLight : "#ffffff",// Background padding hex color
+                    correctLevel : QRCode.CorrectLevel.H // High-density error correction level
+                });
+            }
+        });
+    }
+
+</script>
