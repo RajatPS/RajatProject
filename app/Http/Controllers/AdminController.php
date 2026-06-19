@@ -120,12 +120,12 @@ class AdminController extends Controller
 
     public function deleteOrder(Request $request){
         $id = $request->input('id');
-        $product = Order::find($id);
-        if (!$product) {
-            return response()->json(['success' =>'False' , 'message' => 'Order not found.']);
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['success' => false , 'message' => 'Order not found.']);
         }
         Order::destroy($id);
-        return response()->json(['success' =>'True' , 'message' => 'Order deleted successfully.']);
+        return response()->json(['success' => true , 'message' => 'Order deleted successfully.']);
     }
 
     public function updateOrderStatus( Request $request){
@@ -137,7 +137,7 @@ class AdminController extends Controller
             $order->save();
             return response()->json(['success' => true, 'message' => 'Order status updated successfully.']);
         }
-        return response()->json(['success' =>'false', 'message' => 'Order not found.'], 404);
+        return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
     }
 
 
@@ -156,7 +156,7 @@ class AdminController extends Controller
     }
 
 
-    public function adminLogin(request $request){
+    public function adminLogin(Request $request){
         $request->validate([
             'login_email'=>'required|email',
             'login_password'=>'required|min:1',

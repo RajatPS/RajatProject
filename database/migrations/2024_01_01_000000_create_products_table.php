@@ -11,17 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-            Schema::create('products', function (Blueprint $table) {
+        Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('seller_id')->nullable();
             $table->string('product_name');
             $table->string('category')->nullable();
-            $table->string('product_id')->unique();
             $table->decimal('price', 10, 2);
-            $table->integer('stock_quantity')->default(0);
+            $table->integer('stock')->default(0);
             $table->decimal('weight', 8, 2)->nullable();
             $table->text('description')->nullable();
             $table->boolean('status')->default(true);
+            $table->json('type')->nullable(); // for featured, new, onSale
             $table->timestamps();
+            $table->index('seller_id');
+            $table->index('category');
+            $table->index('status');
+            
+            // Foreign key - nullable for now
+            $table->foreign('seller_id')->references('id')->on('users')->onDelete('set null');
         });
     }
 
@@ -33,4 +40,3 @@ return new class extends Migration
         Schema::dropIfExists('products');
     }
 };
-

@@ -93,7 +93,7 @@ class Products extends Controller
 
         $productIds = collect($selectedProducts)->pluck('id')->toArray();
 
-        $buyproduct = product::with('images')
+        $buyproduct = Product::with('images')
             ->whereIn('id', $productIds)
             ->get()
             ->map(function ($product) use ($selectedProducts) {
@@ -157,10 +157,10 @@ class Products extends Controller
     }
 
     // add products
-    public function addProducts(Request $Request)
+    public function addProducts(Request $request)
     {
          
-        $Request->validate([
+        $request->validate([
             'productName' => 'required|max:50',
             'category' => 'required',
             'price' => 'required|numeric',
@@ -175,20 +175,20 @@ class Products extends Controller
         ]);
 
         $save = Product::create([
-            'product_name' => $Request->productName,
-            'category' => $Request->category,
-            'price' => $Request->price,
-            'stock' => $Request->stock,
-            'description' => $Request->description,
-            'status' => $Request->status,
-            'type' => $Request->type,  
-            'weight' => $Request->weight,
+            'product_name' => $request->productName,
+            'category' => $request->category,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'description' => $request->description,
+            'status' => $request->status,
+            'type' => $request->type,  
+            'weight' => $request->weight,
             'seller_id' => Auth::id(),
         ]);
         
 
-        if ($Request->hasFile('productImages')) {                          // for multiple image storage
-            foreach ($Request->file('productImages') as $image) {
+        if ($request->hasFile('productImages')) {                          // for multiple image storage
+            foreach ($request->file('productImages') as $image) {
                 $imagePath = $image->store('images', 'public');
 
                 Productimg::create([
@@ -207,7 +207,7 @@ class Products extends Controller
         $id = $request->input('productId');
         $product = Product::findOrFail($id);
         $product->delete();
-        return back()->withsuccess("Product deleted successfully!");
+        return back()->with('success', "Product deleted successfully!");
     
         // return response()->json(['success' => true , 'message' => 'Product deleted successfully!']);
     }

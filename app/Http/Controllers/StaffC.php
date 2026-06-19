@@ -110,7 +110,7 @@ class StaffC extends Controller
             $user = User::create([
                 'name' => $request->name.' '.$request->last_name,
                 'email' => $request->email,
-                'phone' => session('staff_phone'),
+                'phone_number' => session('phone'),
                 'password' => bcrypt($request->password),
                 'address' => $request->address . ', ' . $request->city . ', ' . $request->state,
                 'zip' => $request->zip,
@@ -124,7 +124,7 @@ class StaffC extends Controller
                 'license_no' => $request->license_no,
             ]);
 
-            session()->forget(['otp', 'staff_phone', 'otp_source']);
+            session()->forget(['otp', 'phone', 'otp_source']);
 
             return redirect('seller/sellerLogin')
                 ->with('success', 'Staff registered successfully.');

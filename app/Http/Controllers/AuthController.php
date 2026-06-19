@@ -32,7 +32,7 @@ class AuthController extends Controller
             $existingUser = User::where('email', $user->getEmail())->first();
 
             if ($existingUser) {
-                Auth::Login($existingUser);
+                Auth::login($existingUser);
                 return redirect('/seller/dashboard');
             } 
             else {
@@ -44,7 +44,7 @@ class AuthController extends Controller
 
                 //i want to use twilo to send otp to the user phone number for verification before login here
 
-                Auth::Login($newUser);
+                Auth::login($newUser);
                 
                 return redirect('/seller/dashboard');
             }

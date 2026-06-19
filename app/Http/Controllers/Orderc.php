@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderC extends Controller
 {
-    public function submitreturnReason(Request $Request){
-        $order_id= $Request->order_id;
-        $reason = $Request->reason;
+    public function submitreturnReason(Request $request){
+        $order_id= $request->order_id;
+        $reason = $request->reason;
         $order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -34,8 +34,8 @@ class OrderC extends Controller
 
     }
 
-    public function returnOrder(Request $Request){
-        $order_id= $Request->order_id;
+    public function returnOrder(Request $request){
+        $order_id= $request->order_id;
         $order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -54,8 +54,8 @@ class OrderC extends Controller
 
     }
 
-    public function cancelOrder(Request $Request){
-        $order_id= $Request->order_id;
+    public function cancelOrder(Request $request){
+        $order_id= $request->order_id;
         $check_order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -94,8 +94,8 @@ class OrderC extends Controller
 
 
     
-    public function addressDetails(Request $Request){
-        $products = json_decode($Request->products, true) ?? [];
+    public function addressDetails(Request $request){
+        $products = json_decode($request->products, true) ?? [];
         if (empty($products)) {
             return back()->with('error', 'Select at least one product to buy.');
         }

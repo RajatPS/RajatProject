@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use session;
 use Twilio\Rest\Client;
 
 class SellerC extends Controller
@@ -135,7 +134,7 @@ class SellerC extends Controller
             'password' => 'required|min:2|confirmed',
         ]);
         }
-        catch(\Illuminate\Validation\validationException $e){
+        catch(\Illuminate\Validation\ValidationException $e){
             return back()->withErrors($e->validator)->withInput();  
         }
 
@@ -217,7 +216,7 @@ class SellerC extends Controller
             $existingUser = User::where('email', $user->getEmail())->first();
 
             if ($existingUser) {
-                Auth::Login($existingUser);
+                Auth::login($existingUser);
                 return redirect('/seller/dashboard');
             } 
             

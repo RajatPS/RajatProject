@@ -31,20 +31,20 @@ Route::get('Ucontact', function () {
     return view('users.Ucontact');
 });
 
-route::get('/',[Products::class,'viewProducts']);
-route::get('/Uproducts',[Products::class,'viewProducts']);
+Route::get('/',[Products::class,'viewProducts']);
+Route::get('/Uproducts',[Products::class,'viewProducts']);
 
 /////////////////////////////////////////////////////////////////// users signup and login routes//////
 
 Route::get('users/Usignup', function () {
     return view('users.Usignup');
 });
-route::post('users/Usignup',[Users::class,'gmail'])->name('Usignup');
+Route::post('users/Usignup',[Users::class,'gmail'])->name('Usignup');
 
 Route::get('/users/Ulogin', function () {
     return view('users.Ulogin');
 });
-route::post('users/Ulogin', [Users::class,'login'])->name('login');
+Route::post('users/Ulogin', [Users::class,'login'])->name('login');
 
 Route::middleware(['auth',])->group(function () {
 
@@ -54,14 +54,14 @@ Route::middleware(['auth',])->group(function () {
 
         ////////////////////////////////////////////////////////////////
         //logout route
-        route::post('/users/Ulogout',[Users::class,'logout']);
+        Route::post('/users/Ulogout',[Users::class,'logout']);
 
         ////users details
-        route::get('/users/Udetails',[Users::class,'user_details']);
-        route::post('/users/Udetails',[Users::class,'update_details']);
+        Route::get('/users/Udetails',[Users::class,'user_details']);
+        Route::post('/users/Udetails',[Users::class,'update_details']);
 
         //edit details
-        route::get('/users/UeditDetails',[Users::class,'edit_details']);
+        Route::get('/users/UeditDetails',[Users::class,'edit_details']);
 
 
         /////////////////////////////////////////////////////////////////
@@ -74,24 +74,24 @@ Route::middleware(['auth',])->group(function () {
             return response()->json(['token' => csrf_token()]);
         });
 
-        route::get('users/Ucart',[CartC::class,'cart']);                            //go to cart
-        route::post('/Ucart',[CartC::class,'addToCart'])->name('cart.add');         // add to cart
-        route::post('users/removeProductsFromCart',[CartC::class,'removeFromCart']);  // remove from cart
+        Route::get('users/Ucart',[CartC::class,'cart']);                            //go to cart
+        Route::post('/Ucart',[CartC::class,'addToCart'])->name('cart.add');         // add to cart
+        Route::post('users/removeProductsFromCart',[CartC::class,'removeFromCart']);  // remove from cart
 
-        route::post('users/Ucheckout',[Products::class,'productcheckout']);  // checkout route
-        route::post('/users/Ubuyproduct',[OrderC::class,'addressDetails']);  // buy product route
-        route::post('/users/returnOrder',[OrderC::class,'returnOrder']);  // return order route
-        route::post('users/cancelOrder',[OrderC::class,'cancelOrder']);  // cancel order route
-        route::post('users/UreturnOrderReason',[OrderC::class,'returnOrderReason']);  // return reason order route
-        route::post('orders/returnReason',[OrderC::class,'submitreturnReason']);  // return reason order route
-        route::get("users/Uview_Orders",[OrderC::class,'userOrders']);  // user view orders route
-        route::get('users/Uproduct_details/{id}',[Products::class,'buyProduct']); // product details route
-        route:: get ('users/UsingleProduct/',[UserReviewC::class,'singleProductPage']);  // single product page route
-        route:: post ('users/review/',[UserReviewC::class,'addReview'])->name('addReview');  // add review route
-        route::get('users/help',function(){
+        Route::post('users/Ucheckout',[Products::class,'productcheckout']);  // checkout route
+        Route::post('/users/Ubuyproduct',[OrderC::class,'addressDetails']);  // buy product route
+        Route::post('/users/returnOrder',[OrderC::class,'returnOrder']);  // return order route
+        Route::post('users/cancelOrder',[OrderC::class,'cancelOrder']);  // cancel order route
+        Route::post('users/UreturnOrderReason',[OrderC::class,'returnOrderReason']);  // return reason order route
+        Route::post('orders/returnReason',[OrderC::class,'submitreturnReason']);  // return reason order route
+        Route::get("users/Uview_Orders",[OrderC::class,'userOrders']);  // user view orders route
+        Route::get('users/Uproduct_details/{id}',[Products::class,'buyProduct']); // product details route
+        Route::get ('users/UsingleProduct/',[UserReviewC::class,'singleProductPage']);  // single product page route
+        Route::post ('users/review/',[UserReviewC::class,'addReview'])->name('addReview');  // add review route
+        Route::get('users/help',function(){
             return view('users.help');
         });
-        route::post('users/search',[Users::class,'searchproduct']);
+        Route::post('users/search',[Users::class,'searchproduct']);
 });
 
 // route::post('users/CardPayment',function(){
@@ -100,43 +100,43 @@ Route::middleware(['auth',])->group(function () {
 // route::post('users/CardPayment',[OrderC::class,'placeOrder']);
 
 // route::post('UpiPayment/',[OrderC::class,'upiPayment']);
-route::post('users/CodPayment/',[OrderC::class,'placeOrder']);
-route::get('users/CODPayment',[OrderC::class,'showOrderSummary']);
+Route::post('users/CodPayment/',[OrderC::class,'placeOrder']);
+Route::get('users/CODPayment',[OrderC::class,'showOrderSummary']);
 
         ////////////////////////////////   admin routes  ///////////////////////////////////////////////////////
 
-route:: get('admin/adminLogin',function(){
+Route::get('admin/adminLogin',function(){
     return view('admin/adminLogin');
 });
-route ::post('admin/adminLogin',[AdminController::class,'adminLogin']);
+Route::post('admin/adminLogin',[AdminController::class,'adminLogin']);
 
 
-route:: get('admin/adminSignup',function(){
+Route::get('admin/adminSignup',function(){
     return view('admin/adminSignup');
 });
-route:: post('admin/adminSignup',[AdminController::class,'adminSignup']);
+Route::post('admin/adminSignup',[AdminController::class,'adminSignup']);
 
 Route::middleware(['auth',])->group(function () {
 
-        route::get("admin/Aaddproducts",function(){
+        Route::get("admin/Aaddproducts",function(){
             return view('admin.Aaddproducts');
         });
 
 
-        route::get('admin/adminDashboard',[AdminController::class,'adminPanel']);
+        Route::get('admin/adminDashboard',[AdminController::class,'adminPanel']);
 
-        route::get('admin/Amanageorders',[OrderC::class,'viewOrders']); // add Products
-        route::post("admin/deleteOrder/",[AdminController::class,'deleteOrder']); // delete order
-        route::post("/admin/orders/{orderId}/update-status",[AdminController::class,'updateOrderStatus']); // update order status
+        Route::get('admin/Amanageorders',[OrderC::class,'viewOrders']); // add Products
+        Route::post("admin/deleteOrder/",[AdminController::class,'deleteOrder']); // delete order
+        Route::post("/admin/orders/{orderId}/update-status",[AdminController::class,'updateOrderStatus']); // update order status
         Route::POST("Aaddproducts",[Products::class,'addProducts']);// admin view Products
         Route::get('admin/Aproducts', [Products::class, 'index']);
         Route::POST('admin/Aproducts/{id}/toggle', [Products::class, 'toggleStatus']);
 
-        route::get('admin/AdminUserManagement',[AdminController::class,'userManagement']);
-        route::post('/admin/users/{userId}/toggle-status',[AdminController::class,'updateUserStatus']);
-        route::post('admin/deleteUser',[AdminController::class,'deleteUser']);
-        route::post('admin/profile',[AdminController::class,'updateAdminProfile']);
-        route::post('admin/logout',[AdminController::class,'adminLogout']);
+        Route::get('admin/AdminUserManagement',[AdminController::class,'userManagement']);
+        Route::post('/admin/users/{userId}/toggle-status',[AdminController::class,'updateUserStatus']);
+        Route::post('admin/deleteUser',[AdminController::class,'deleteUser']);
+        Route::post('admin/profile',[AdminController::class,'updateAdminProfile']);
+        Route::post('admin/logout',[AdminController::class,'adminLogout']);
 
 
 
@@ -151,36 +151,36 @@ Route::middleware(['auth',])->group(function () {
 
 });
 
-route::get('admin/sidebar',function(){
+Route::get('admin/sidebar',function(){
     return view('layouts.adminSidebar');
 });
 
 ///////////////////////////////////  seller routes  ////////////////////////////////////////////////////////////////
 
 
-route::get('/seller/signup',function(){
+Route::get('/seller/signup',function(){
     return view('seller.sellersignup');
 });
 
-route::post('/seller/sendOtp',[SellerC::class,'sendOTP']);
+Route::post('/seller/sendOtp',[SellerC::class,'sendOTP']);
 
-route::get('seller/sellerMatchOTP',function(){
+Route::get('seller/sellerMatchOTP',function(){
     return view('seller.sellerMatchOTP');
 });
 
-route::post('/matchotp',[sellerC::class,'matchotp']);
+Route::post('/matchotp',[sellerC::class,'matchotp']);
 
-route::get('/seller/sellerDetails',function(){
+Route::get('/seller/sellerDetails',function(){
     return view('seller.sellerDetails');
 });
 
 
 
-route::get('/seller/sellerLogin',function(){
+Route::get('/seller/sellerLogin',function(){
     return view('seller/sellerLogin');
 });
 
-route::post('/seller/login',[SellerC::class,'sellerLogin']);
+Route::post('/seller/login',[SellerC::class,'sellerLogin']);
 
 Route::get('/auth/googlesignup', [AuthController::class, 'signupredirect']);
 Route::get('/auth/googlesignup/callback', [AuthController::class, 'signupcallback']);
@@ -191,39 +191,39 @@ Route::get('/auth/googlelogin', [SellerC::class, 'Loginredirect']);
 Route::get('/auth/googlelogin/callback', [SellerC::class, 'Logincallback']);
 
 
-route::get('/seller/sellerDetails',function(){
+Route::get('/seller/sellerDetails',function(){
     return view('seller.sellerDetails');
 });
 
-route::post('/seller/sellerSubmitDetails',[SellerC::class,'sellerDetails']);
-route::post('/seller/logout',[SellerC::class,'sellerLogout']);
+Route::post('/seller/sellerSubmitDetails',[SellerC::class,'sellerDetails']);
+Route::post('/seller/logout',[SellerC::class,'sellerLogout']);
 
 
 Route::middleware(['auth',] )->group(function () {
 
-    route::get('seller/products/',[SellerC::class,'sellerProducts']);
-    route::get('seller/orders/',[sellerC::class,'sellerorderedProducts']);
+    Route::get('seller/products/',[SellerC::class,'sellerProducts']);
+    Route::get('seller/orders/',[sellerC::class,'sellerorderedProducts']);
 
 
-    route::post('/seller/orders/updateStatus/{id}',[sellerC::class,'updateStatus']);
+    Route::post('/seller/orders/updateStatus/{id}',[sellerC::class,'updateStatus']);
 
 
-    route::post('seller/sellerEditProducts',[Products::class,'editProducts']);
-    route::post('seller/sellerDeleteProduct',[Products::class,'deleteProducts']);
+    Route::post('seller/sellerEditProducts',[Products::class,'editProducts']);
+    Route::post('seller/sellerDeleteProduct',[Products::class,'deleteProducts']);
 
-    route::get('seller/review/',function(){
+    Route::get('seller/review/',function(){
         return view('seller.sellerReview');
     });
 
-    route::get('seller/payment/',function(){
+    Route::get('seller/payment/',function(){
         return view('seller.sellerPayment');
     });
 
-    route::get('seller/selleraddProduct/',function(){
+    Route::get('seller/selleraddProduct/',function(){
         return view('seller.sellerAddproduct');
     });
 
-    route::post('/seller/addproduct',[Products::class,'addProducts']);
+    Route::post('/seller/addproduct',[Products::class,'addProducts']);
 
     // route::get('seller/dashboard/',function(){
     //     return view('seller/sellerHome');
@@ -235,18 +235,18 @@ Route::middleware(['auth',] )->group(function () {
 
     ////////////////////////////////////////////////////////////////////////////////// staff////////////////////
 
-    route::get('staff/staffSignup',function(){
+    Route::get('staff/staffSignup',function(){
         return view('staff.staffSignup');
     });
-    route::post('/staff/sendOtp',[StaffC::class,'sendotp']);
+    Route::post('/staff/sendOtp',[StaffC::class,'sendotp']);
 
-    route::get('staff/SignupDetails',function(){
+    Route::get('staff/SignupDetails',function(){
         return view('staff.SignupDetails');
     });
-    route::post('staff/submitSignupDetails',[StaffC::class,'submitSignupDetails']);
+    Route::post('staff/submitSignupDetails',[StaffC::class,'submitSignupDetails']);
     
-    route::get('staff/Dashboard',[StaffC::class,'staffDashboard']);
-    route::get('staff/orders',[StaffC::class,'staffOrders']);
+    Route::get('staff/Dashboard',[StaffC::class,'staffDashboard']);
+    Route::get('staff/orders',[StaffC::class,'staffOrders']);
 
 
 
