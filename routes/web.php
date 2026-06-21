@@ -159,7 +159,7 @@ Route::get('admin/sidebar',function(){
 
 
 Route::get('/seller/signup',function(){
-    return view('seller.sellersignup');
+    return view('seller.sellerSignup');
 });
 
 Route::post('/seller/sendOtp',[SellerC::class,'sendOTP']);

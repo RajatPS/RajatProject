@@ -583,7 +583,7 @@
                                     <i class="bi bi-cart-plus me-2"></i> Add to Cart
                                 </button>
                                 
-                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct?product_id=' . $product->id) }}">
+                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct') }}">
                                     @csrf
                                     <input type="hidden" name="product_id" id="modal-input-id-view">
                                     <button type="submit" class="btn modal-button3 w-100">

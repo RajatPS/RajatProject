@@ -88,6 +88,12 @@ class SellerC extends Controller
             $sid = config('services.twilio.sid');
             $token = config('services.twilio.token');
             $from = config('services.twilio.from');
+            
+            // Validate Twilio configuration
+            if (!$sid || !$token || !$from) {
+                return back()->withErrors(['error' => 'Twilio configuration is missing. Please contact administrator.']);
+            }
+            
             $twilio = new Client($sid, $token);
             $twilio->messages->create(
                 $fullPhoneNumber, 
@@ -130,7 +136,7 @@ class SellerC extends Controller
         try {
             $request->validate([
             'name'=>'required|string|max:50',
-            'email' => 'required|email|unique:Users,email',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:2|confirmed',
         ]);
         }
