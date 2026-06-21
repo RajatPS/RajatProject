@@ -26,6 +26,21 @@ class UserReviewC extends Controller
         
         ]);
 
+        // Fixed: Verify product exists and is active
+        $product = Product::find($validate['product_id']);
+        if (!$product || !$product->status) {
+            return back()->withErrors('This product is not available.');
+        }
+        
+        // Fixed: Check if user already reviewed this product
+        $existingReview = User_review::where('user_id', $user_id)
+                                      ->where('product_id', $validate['product_id'])
+                                      ->first();
+        
+        if ($existingReview) {
+            return back()->withErrors('You have already reviewed this product.');
+        }
+
         User_review::create([
             'user_id' => $user_id,
             'user_email' => Auth::user()->email,

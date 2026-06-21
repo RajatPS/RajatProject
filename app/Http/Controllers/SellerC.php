@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -15,14 +16,14 @@ class SellerC extends Controller
 {
     public function updateStatus(Request $request){ 
          $id = $request->route('id');
-         // dd($request->all());                            
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Received data: ' . json_encode($request->all()),
-        // ]);
         $orderId = $id;
         $status = $request->input('status');
-        $order = Order::findOrFail($orderId);
+        
+        // Verify that the order belongs to this seller's product
+        $order = Order::whereHas('product', function ($query) {
+            $query->where('seller_id', Auth::id());
+        })->findOrFail($orderId);
+        
         $order->status = $status;
         $order->save();
 
@@ -43,10 +44,13 @@ class SellerC extends Controller
 
     public function sellerDashboard(){
         $user = Auth::user();
-        $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();  //better version thsn previous ones
-        $todayOrders = $userOrders->where('created_at', '>=', now()->startOfDay())->count();
+        $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();
+        // Fixed: Use order_date instead of created_at (Order model has timestamps=false)
+        $todayOrders = $userOrders->where('order_date', Carbon::today())->count();
         $pendingOrders = $userOrders->where('status', 'Pending');
-        $confirmedOrders = $userOrders->where('status', 'confirmed');
+        // Fixed: Changed 'confirmed' to 'Confirmed' to match database values
+        $confirmedOrders = $userOrders->where('status', 'Confirmed');
+        // Note: Payout logic shows orders delivered in last 3 days - adjust if different intent
         $pendingPayout = Order::whereHas('product', function ($query) {
             $query->where('seller_id', Auth::id());
             })->where('status', 'delivered')->where('delivered_at', '>=', now()->subDays(3))->sum('totalAmount');
@@ -55,9 +59,19 @@ class SellerC extends Controller
     }
 
     public function sellerOrderedProducts(){
-        $products=Product::with('images','orders')->where('seller_id',Auth::id())->latest()->get();
-        // dd($products);
-        return view('seller.sellerOrders',compact('products'));
+        $seller_id = Auth::id();
+        // Get orders for this seller's products, with product and image relationships
+        $orders = Order::whereRelation('product', 'seller_id', $seller_id)
+                      ->with(['product.images', 'user'])
+                      ->orderByDesc('order_date')
+                      ->get();
+        
+        // Group orders by product for display (alternative to product->orders relationship)
+        $products = Product::with(['images', 'orders' => function($query) use ($seller_id) {
+            // No additional filtering needed as products are already filtered by seller_id
+        }])->where('seller_id', $seller_id)->latest()->get();
+        
+        return view('seller.sellerOrders', compact('orders', 'products'));
     }
 
 
@@ -178,15 +192,32 @@ class SellerC extends Controller
         if (!Auth::attempt([
             'email' => $credentials['login_email'],
             'password' => $credentials['login_password'],
-            'account_status' => 'active',
             ])) {
             return back()->withErrors([
                 'login_email' => 'Check your email and password and try again.',
             ])->withInput();
         }
 
-        $request->session()->regenerate();
         $user = Auth::user();
+        
+        // Check if account is active
+        if (strtolower($user->account_status) !== 'active') {
+            Auth::logout();
+            return back()->withErrors([
+                'login_email' => 'Your account has been disabled. Please contact support.',
+            ])->withInput();
+        }
+        
+        // Check if user has correct role
+        if ($user->role !== 'seller' && $user->role !== 'staff') {
+            Auth::logout();
+            return back()->withErrors([
+                'login_email' => 'Invalid credentials.',
+            ])->withInput();
+        }
+
+        $request->session()->regenerate();
+        
         if ($user->role === 'staff') {
             return redirect('staff/Dashboard');
         }
@@ -194,8 +225,8 @@ class SellerC extends Controller
         if ($user->role === 'seller') {
             return redirect('seller/sellerDashboard');
         }
+        
         Auth::logout();
-
         return back()->withErrors([
             'login_email' => 'Check your email and password and try again.',
         ]);
@@ -206,17 +237,20 @@ class SellerC extends Controller
 
    public function Loginredirect(Request $request)
     {
+        // Fixed: Use config instead of hardcoded localhost URL
+        $redirectUrl = config('app.url') . '/auth/googlelogin/callback';
         return Socialite::driver('google')
-        ->redirectUrl('http://localhost:8000/auth/googlelogin/callback')
+        ->redirectUrl($redirectUrl)
         ->redirect();
     }
 
     public function Logincallback(Request $request)
     {
         try {
-
+        // Fixed: Use config instead of hardcoded localhost URL
+        $redirectUrl = config('app.url') . '/auth/googlelogin/callback';
         $user = Socialite::driver('google')
-        ->redirectUrl('http://localhost:8000/auth/googlelogin/callback')
+        ->redirectUrl($redirectUrl)
         ->user();
 
             $existingUser = User::where('email', $user->getEmail())->first();

@@ -122,42 +122,48 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($products as $product)
-                    @foreach($product->orders as $order)
-                        <tr class="order-row">
-                            <td>
-                                <strong>Order Id:{{ $order->id }}</strong> <br>
-                                <strong>Product Id: {{ $order->product_id }}</strong>
-                                <small style="display:block; opacity: 0.6;">{{ $order->order_date->format('M j, Y') }}</small>
-                            </td>
-                            <td class="customer-info">
-                                {{ $order->fullname}}
-                                <small>{{ $order->address}}</small>
-                            </td>
-                            <td>{{ $order->quantity}} item(s)</td>
-                            <td><span class="tracking-code">TRK9400122</span></td>
-                            <td>₹{{ number_format($order->totalAmount, 2) }}</td>
-                            <td><span class="badge bg-shipped">{{ $order->status }}</span></td>
-                            <td>
-                                @if($order->status === 'Pending')
-                                <button title="Alter Status" 
-                                        id="alter-btn" 
-                                        onclick="openStatusChangeModal('{{ $order->id }}', '{{ $order->status }}')">
-                                    <i class="fas fa-toggle-on"></i>
-                                </button>
-                                @elseif($order->status === 'Confirmed')
-                                <button title="Generate QR" 
-                                        id="QR-btn" 
-                                        onclick="generateQRCode('{{ $order->id }}')">
-                                    <i class="fas fa-qrcode"></i>
-                                </button>
-                                @endif
+                @forelse($orders as $order)
+                    <tr class="order-row">
+                        <td>
+                            <strong>Order Id: {{ $order->id }}</strong> <br>
+                            <strong>Product Id: {{ $order->product_id }}</strong>
+                            <small style="display:block; opacity: 0.6;">{{ $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('M j, Y') : 'N/A' }}</small>
+                        </td>
+                        <td class="customer-info">
+                            {{ $order->fullname}}
+                            <small>{{ $order->address}}</small>
+                        </td>
+                        <td>{{ $order->quantity}} item(s)</td>
+                        <td><span class="tracking-code">TRK9400122</span></td>
+                        <td>₹{{ number_format($order->totalAmount, 2) }}</td>
+                        <td><span class="badge bg-shipped">{{ $order->status }}</span></td>
+                        <td>
+                            @if($order->status === 'Pending')
+                            <button title="Alter Status" 
+                                    id="alter-btn" 
+                                    onclick="openStatusChangeModal('{{ $order->id }}', '{{ $order->status }}')">
+                                <i class="fas fa-toggle-on"></i>
+                            </button>
+                            @elseif($order->status === 'Confirmed')
+                            <button title="Generate QR" 
+                                    id="QR-btn" 
+                                    onclick="generateQRCode('{{ $order->id }}')">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                            @endif
 
-                                <button title="Print Label"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                    @endforeach
-                @endforeach 
+                            <button title="Print Label"><i class="fas fa-print"></i></button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: rgba(255, 255, 255, 0.6);">
+                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            No orders found for your products
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
             </tbody>
         </table>
     </div>

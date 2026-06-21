@@ -18,6 +18,11 @@ class AdminController extends Controller
     }
 
     public function updateAdminProfile(Request $request){
+        // Authorization: Verify admin is authenticated
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return back()->with('error', 'Unauthorized access.');
+        }
+        
         $admin = Auth::user();
         $admin->email = $request->input('email');
         if ($request->filled('password')) {
@@ -128,10 +133,17 @@ class AdminController extends Controller
         return response()->json(['success' => true , 'message' => 'Order deleted successfully.']);
     }
 
-    public function updateOrderStatus( Request $request){
+    public function updateOrderStatus(Request $request){
        $orderId = $request->route('orderId');
        $status = $request->input('status');
-        $order = Order::find($orderId);
+       
+       // Validate status is one of the allowed values
+       $validStatuses = ['Pending', 'Confirmed', 'offDelivery', 'delivered', 'Cancelled', 'returned'];
+       if (!in_array($status, $validStatuses)) {
+           return response()->json(['success' => false, 'message' => 'Invalid status value.'], 400);
+       }
+       
+       $order = Order::find($orderId);
         if ($order) {
             $order->status = $status;
             $order->save();
@@ -167,6 +179,13 @@ class AdminController extends Controller
             'password' => $request->login_password,
             'role' => 'admin',
         ])) {
+            $user = Auth::user();
+            
+            // Fixed: Check if admin account is active
+            if (strtolower($user->account_status) !== 'active') {
+                Auth::logout();
+                return back()->withErrors(['login_error' => 'Your account has been disabled.']);
+            }
 
             return redirect('admin/adminDashboard');
         }

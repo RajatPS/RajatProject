@@ -488,6 +488,12 @@
                     <input type="text" id="gender" name="gender" placeholder="Your Gender"  value="{{$udetails->gender}}" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="status">Account Status</label>
+                    <input type="text" id="status" name="status" placeholder="Account Status" value="{{ ucfirst($udetails->account_status ?? 'active') }}" disabled style="cursor: not-allowed; opacity: 0.7;">
+                    <small style="color: rgba(255, 255, 255, 0.6); margin-top: 5px; display: block;">Your account status is {{ strtolower($udetails->account_status ?? 'active') }}. Contact support if you have questions.</small>
+                </div>
+
                 <button type="submit" class="signup-btn">Save</button>
             </form>
         </div>

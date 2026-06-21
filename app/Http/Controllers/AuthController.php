@@ -16,8 +16,9 @@ class AuthController extends Controller
 // For Google signup
     public function signupredirect(Request $request)
     {
+        // Fixed: Use config('app.url') instead of hardcoded URL
         return Socialite::driver('google')
-        ->redirectUrl('http://localhost:8000/auth/googlesignup/callback')
+        ->redirectUrl(config('app.url') . '/auth/googlesignup/callback')
         ->redirect();
     }
 
@@ -25,28 +26,35 @@ class AuthController extends Controller
     {
 
         try {
+            // Fixed: Use config('app.url') instead of hardcoded URL
             $user = Socialite::driver('google')
-                ->redirectUrl('http://localhost:8000/auth/googlesignup/callback')
+                ->redirectUrl(config('app.url') . '/auth/googlesignup/callback')
                 ->user();
 
             $existingUser = User::where('email', $user->getEmail())->first();
 
             if ($existingUser) {
+                // Fixed: Check if account is active before login
+                if (strtolower($existingUser->account_status) !== 'active') {
+                    return redirect('/seller/sellerLogin')->withErrors(['error' => 'Your account has been disabled.']);
+                }
+                
                 Auth::login($existingUser);
-                return redirect('/seller/dashboard');
+                return redirect('/seller/sellerDashboard');
             } 
             else {
                 $newUser = User::create([
                     'email' => $user->getEmail(),
                     'password' => bcrypt(Str::random(16)),
                     'role' => 'seller',
+                    'account_status' => 'active', // Fixed: Set active status for new user
                 ]);
 
                 //i want to use twilo to send otp to the user phone number for verification before login here
 
                 Auth::login($newUser);
                 
-                return redirect('/seller/dashboard');
+                return redirect('/seller/sellerDashboard');
             }
         } 
         catch (\Throwable $e) {

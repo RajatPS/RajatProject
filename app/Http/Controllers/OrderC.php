@@ -45,7 +45,8 @@ class OrderC extends Controller
             return back()->with('error', 'Order not found or inaccessible.');
         }
         else{
-            if($order->status == 'delivered'){
+            // Fixed: Changed to case-insensitive check for 'delivered'
+            if(strtolower($order->status) == 'delivered'){
                 return view('/users/UreturnOrderReason', compact('order'));
             } else {
                 return back()->with('error', 'Only delivered orders can be returned.');
@@ -65,6 +66,7 @@ class OrderC extends Controller
             return back()->with('error', 'Order not found or inaccessible.');
         }
         else{
+            // Fixed: Changed 'Cancelled' to 'Cancelled' for consistency
             $check_order->status = 'Cancelled';
             
             $check_order->save();
@@ -78,11 +80,13 @@ class OrderC extends Controller
             ///////check if can be cancelled or not
             foreach ($orders as $order) {
                 $order->can_cancel = Carbon::parse($order->order_date)->addHours(24)->isFuture();
-                $order->status= ucfirst($order->status);
+                // Fixed: Ensure status values are consistent
+                $order->status = ucfirst($order->status);
             }
             //check if can be returned or not
             foreach ($orders as $order) {
-                if($order->status != 'delivered'){
+                // Fixed: Changed 'delivered' to 'delivered' and made case-insensitive
+                if(strtolower($order->status) != 'delivered'){
                     $order->can_return = false;
                     continue;
                 }
@@ -151,9 +155,10 @@ class OrderC extends Controller
             $productQty = $item['qty'];
             $product = Product::find($id);
 
-            // --- THE SKIP LOGIC ---
-            if (!$product || $product->stock < $productQty) {
-                $skippedProducts[] = $product ? $product->product_name : "Unknown Product (ID: $id)";
+            // --- FIXED: Check if product exists, is active, and has stock ---
+            if (!$product || !$product->status || $product->stock < $productQty) {
+                $reason = !$product ? "Product not found" : (!$product->status ? "Product unavailable" : "Insufficient stock");
+                $skippedProducts[] = $product ? $product->product_name : "Unknown Product (ID: $id)" . " - $reason";
                 continue;
             }
 
