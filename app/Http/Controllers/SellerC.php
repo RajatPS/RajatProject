@@ -6,24 +6,46 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use session;
 use Twilio\Rest\Client;
 
 class SellerC extends Controller
 {
+    public function sellerLogout(Request $request){
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/seller/sellerLogin');
+    }
+
+
     public function updateStatus(Request $request){ 
-         $id = $request->route('id');
-         // dd($request->all());                            
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Received data: ' . json_encode($request->all()),
-        // ]);
-        $orderId = $id;
-        $status = $request->input('status');
-        $order = Order::findOrFail($orderId);
+        $orderId = $request->route('id') ?? $request->input('orderId');
+        $status = strtolower($request->input('status'));
+
+        if (!$orderId) {
+            return response()->json(['success' => false, 'message' => 'Order ID is required.'], 422);
+        }
+
+        if ($status === 'confirm') {
+            $status = 'confirmed';
+        } elseif ($status === 'cancel') {
+            $status = 'cancelled';
+        }
+
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'delivered', 'returned'];
+        if (!in_array($status, $validStatuses, true)) {
+            return response()->json(['success' => false, 'message' => 'Invalid status provided.'], 422);
+        }
+
+        // Verify that the order belongs to this seller's product
+        $order = Order::whereHas('product', function ($query) {
+            $query->where('seller_id', Auth::id());
+        })->findOrFail($orderId);
+
         $order->status = $status;
         $order->save();
 
@@ -35,18 +57,11 @@ class SellerC extends Controller
     }
 
 
-    public function sellerLogout(Request $request){
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/seller/sellerLogin');
-    }
-
     public function sellerDashboard(){
         $user = Auth::user();
-        $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();  //better version thsn previous ones
-        $todayOrders = $userOrders->where('created_at', '>=', now()->startOfDay())->count();
-        $pendingOrders = $userOrders->where('status', 'Pending');
+        $userOrders = Order::whereRelation('product', 'seller_id', $user->id)->with(['product','product.images'])->get();
+        $todayOrders = $userOrders->where('order_date', Carbon::today())->count();
+        $pendingOrders = $userOrders->where('status', 'pending');
         $confirmedOrders = $userOrders->where('status', 'confirmed');
         $pendingPayout = Order::whereHas('product', function ($query) {
             $query->where('seller_id', Auth::id());
@@ -56,14 +71,22 @@ class SellerC extends Controller
     }
 
     public function sellerOrderedProducts(){
-        $products=Product::with('images','orders')->where('seller_id',Auth::id())->latest()->get();
-        // dd($products);
-        return view('seller.sellerOrders',compact('products'));
+        $seller_id = Auth::id();
+        // Get orders for this seller's products, with product and image relationships
+        $orders = Order::whereRelation('product', 'seller_id', $seller_id)
+                      ->with(['product.images', 'user'])
+                      ->orderByDesc('order_date')
+                      ->get();
+        
+        $products = Product::with(['images', 'orders' => function($query) use ($seller_id) {
+        }])->where('seller_id', $seller_id)->latest()->get();
+        
+        return view('seller.sellerOrders', compact('orders', 'products'));
     }
 
 
     public function sellerProducts(){
-        $products = Product::with('images', 'orders')->where('seller_id', Auth::id())->get();
+        $products = Product::with('images', 'orders')->where('seller_id', Auth::id())->withoutTrashed()->get();
         return view('seller.sellerProducts', compact('products',));
     } 
 
@@ -89,6 +112,12 @@ class SellerC extends Controller
             $sid = config('services.twilio.sid');
             $token = config('services.twilio.token');
             $from = config('services.twilio.from');
+            
+            // Validate Twilio configuration
+            if (!$sid || !$token || !$from) {
+                return back()->withErrors(['error' => 'Twilio configuration is missing. Please contact administrator.']);
+            }
+            
             $twilio = new Client($sid, $token);
             $twilio->messages->create(
                 $fullPhoneNumber, 
@@ -131,11 +160,11 @@ class SellerC extends Controller
         try {
             $request->validate([
             'name'=>'required|string|max:50',
-            'email' => 'required|email|unique:Users,email',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:2|confirmed',
         ]);
         }
-        catch(\Illuminate\Validation\validationException $e){
+        catch(\Illuminate\Validation\ValidationException $e){
             return back()->withErrors($e->validator)->withInput();  
         }
 
@@ -173,15 +202,32 @@ class SellerC extends Controller
         if (!Auth::attempt([
             'email' => $credentials['login_email'],
             'password' => $credentials['login_password'],
-            'account_status' => 'active',
             ])) {
             return back()->withErrors([
                 'login_email' => 'Check your email and password and try again.',
             ])->withInput();
         }
 
-        $request->session()->regenerate();
         $user = Auth::user();
+        
+        // Check if account is active
+        if (strtolower($user->account_status) !== 'active') {
+            Auth::logout();
+            return back()->withErrors([
+                'login_email' => 'Your account has been disabled. Please contact support.',
+            ])->withInput();
+        }
+        
+        // Check if user has correct role
+        if ($user->role !== 'seller' && $user->role !== 'staff') {
+            Auth::logout();
+            return back()->withErrors([
+                'login_email' => 'Invalid credentials.',
+            ])->withInput();
+        }
+
+        $request->session()->regenerate();
+        
         if ($user->role === 'staff') {
             return redirect('staff/Dashboard');
         }
@@ -189,8 +235,8 @@ class SellerC extends Controller
         if ($user->role === 'seller') {
             return redirect('seller/sellerDashboard');
         }
+        
         Auth::logout();
-
         return back()->withErrors([
             'login_email' => 'Check your email and password and try again.',
         ]);
@@ -201,23 +247,26 @@ class SellerC extends Controller
 
    public function Loginredirect(Request $request)
     {
+        // Fixed: Use config instead of hardcoded localhost URL
+        $redirectUrl = config('app.url') . '/auth/googlelogin/callback';
         return Socialite::driver('google')
-        ->redirectUrl('http://localhost:8000/auth/googlelogin/callback')
+        ->redirectUrl($redirectUrl)
         ->redirect();
     }
 
     public function Logincallback(Request $request)
     {
         try {
-
+        // Fixed: Use config instead of hardcoded localhost URL
+        $redirectUrl = config('app.url') . '/auth/googlelogin/callback';
         $user = Socialite::driver('google')
-        ->redirectUrl('http://localhost:8000/auth/googlelogin/callback')
+        ->redirectUrl($redirectUrl)
         ->user();
 
             $existingUser = User::where('email', $user->getEmail())->first();
 
             if ($existingUser) {
-                Auth::Login($existingUser);
+                Auth::login($existingUser);
                 return redirect('/seller/dashboard');
             } 
             

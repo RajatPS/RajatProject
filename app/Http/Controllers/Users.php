@@ -15,11 +15,14 @@ class Users extends Controller
     public function searchproduct(Request $request){
         $searchedProduct = $request-> input('query');
         $products = Product::where('category','LIKE','%' .$searchedProduct . '%')->orWhere('product_name', 'LIKE', '%' . $searchedProduct . '%')
-        ->get();
-        if(!$products){
-            return view('users/Uproducts')->with('error','product not found');
+            ->paginate(9);
+        $Fproducts = collect();
+
+        if ($products->isEmpty()) {
+            return view('users.Uproducts')->with('error','product not found');
         }
-        return view('users.Uproducts',compact("products"));
+
+        return view('users.Uproducts', compact('products', 'Fproducts'));
     }
 
 
@@ -83,7 +86,7 @@ class Users extends Controller
                 'email' => $signup['gmail'],
                 'password' =>Hash::make($signup['password']),
                 'role' => 'user',
-                'account_status' => 'Active',
+                'account_status' => 'active',
             ]);
             
             return redirect("users/Ulogin")->with('success', 'Signup successful! Please login to continue.');
@@ -101,6 +104,12 @@ class Users extends Controller
         if (!$userExists) {
             return redirect("users/Usignup")->withErrors(['login_email' => 'This email is not registered,you can signup to create a new account',])
             ->onlyInput('login_email');
+        }
+
+        // Check if user is active
+        $user = User::where('email', $login['login_email'])->first();
+        if ($user && strtolower($user->account_status) !== 'active') {
+            return back()->withErrors(['login_email' => 'Your account has been disabled. Please contact support.',])->onlyInput('login_email');
         }
 
        if(auth()->guard()->attempt(['email'=>$login['login_email'],'password'=>$login['login_password'],'role'=>'user'])){

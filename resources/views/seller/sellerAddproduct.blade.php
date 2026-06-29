@@ -127,6 +127,7 @@
 @endsection
 
 @section('content')
+
 <header>
     <h1><i class="fas fa-plus-circle"></i> Add New Product</h1>
     <p>List a new item in your stationery shop</p>
@@ -143,19 +144,15 @@
             </div>
 
             <div class="form-group">
+                <label for="brand">Brand</label>
+                <input type="text" name="brand" id="brand" placeholder="e.g. Reynolds, Cello, Faber-Castell">
+                <div class="help-text">Product brand or manufacturer</div>
+            </div>
+
+            <div class="form-group">
                 <label for="category">Category <span class="required">*</span></label>
-                <select name="category" required>
-                    <option value="">Select Category</option>
-                    <optgroup label="Books">
-                        <option value="Text books">Text books</option>
-                        <option value="Note books">Note books</option>
-                    </optgroup>
-                    <optgroup label="Stationery">
-                        <option value="pens">Pens</option>
-                        <option value="pencils">Pencils</option>
-                        <option value="erasers">Erasers</option>
-                    </optgroup>
-                </select>
+                <input type="text" name="category" id="category" placeholder="e.g. Stationery, Electronics, Groceries" required>
+                <div class="help-text">Enter any product category</div>
             </div>
 
             <div class="form-group">
@@ -281,5 +278,6 @@
     ['dragleave', 'drop'].forEach(name => {
         dropZone.addEventListener(name, () => dropZone.classList.remove('dragover'));
     });
+
 </script>
 @endsection

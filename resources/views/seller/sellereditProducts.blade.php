@@ -344,6 +344,7 @@
     </div>
 
     <form id="productForm" method="POST" action="{{ url('/admin/AeditProducts') }}">
+        {{-- <form id="productForm" method="POST" action="{{ url('/seller/AeditProducts') }}"> --}}
         @csrf
         <div class="ep-card">
             <input type="hidden" name="productId" value="{{ $products->id }}">
@@ -377,18 +378,9 @@
 
                     <div class="ep-field">
                         <label class="ep-label"><i class="fas fa-list"></i> Category</label>
-                        <div class="ep-select-wrap">
-                            <select class="ep-select ep-input" name="category" id="productCategory">
-                                <option value="">— Select Category —</option>
-                                <option value="text book"  {{ $products->category == 'text book'  ? 'selected' : '' }}>Text Book</option>
-                                <option value="note book"  {{ $products->category == 'notebook'   ? 'selected' : '' }}>Note Book</option>
-                                <option value="story book" {{ $products->category == 'story book' ? 'selected' : '' }}>Story Book</option>
-                                <option value="pens"       {{ $products->category == 'pens'       ? 'selected' : '' }}>Pens</option>
-                                <option value="pencils"    {{ $products->category == 'pencils'    ? 'selected' : '' }}>Pencils</option>
-                                <option value="erasers"    {{ $products->category == 'erasers'    ? 'selected' : '' }}>Erasers</option>
-                                <option value="sharpners"  {{ $products->category == 'sharpners'  ? 'selected' : '' }}>Sharpeners</option>
-                            </select>
-                        </div>
+                        <input type="text" class="ep-input" name="category" id="category"
+                               value="{{ $products->category }}"
+                               placeholder="Enter product category...">
                     </div>
 
                     <div class="ep-field">

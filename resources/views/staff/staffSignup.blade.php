@@ -219,7 +219,7 @@
             
             <div class="signup-link">
                 <span style="opacity: 0.8;">Already have an account?</span><br>
-                <a href="{{url('seller/sellerLogin/')}}">Login here</a>     ////////////////////////////////////////////////////////////////
+                <a href="{{url('seller/sellerLogin/')}}">Login here</a>     
             </div>
         </div>
     </div>

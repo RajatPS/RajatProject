@@ -18,6 +18,11 @@ class AdminController extends Controller
     }
 
     public function updateAdminProfile(Request $request){
+        // Authorization: Verify admin is authenticated
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return back()->with('error', 'Unauthorized access.');
+        }
+        
         $admin = Auth::user();
         $admin->email = $request->input('email');
         if ($request->filled('password')) {
@@ -120,24 +125,31 @@ class AdminController extends Controller
 
     public function deleteOrder(Request $request){
         $id = $request->input('id');
-        $product = Order::find($id);
-        if (!$product) {
-            return response()->json(['success' =>'False' , 'message' => 'Order not found.']);
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['success' => false , 'message' => 'Order not found.']);
         }
         Order::destroy($id);
-        return response()->json(['success' =>'True' , 'message' => 'Order deleted successfully.']);
+        return response()->json(['success' => true , 'message' => 'Order deleted successfully.']);
     }
 
-    public function updateOrderStatus( Request $request){
+    public function updateOrderStatus(Request $request){
        $orderId = $request->route('orderId');
        $status = $request->input('status');
-        $order = Order::find($orderId);
+       
+       // Validate status is one of the allowed values
+       $validStatuses = ['Pending', 'Confirmed', 'offDelivery', 'delivered', 'Cancelled', 'returned'];
+       if (!in_array($status, $validStatuses)) {
+           return response()->json(['success' => false, 'message' => 'Invalid status value.'], 400);
+       }
+       
+       $order = Order::find($orderId);
         if ($order) {
             $order->status = $status;
             $order->save();
             return response()->json(['success' => true, 'message' => 'Order status updated successfully.']);
         }
-        return response()->json(['success' =>'false', 'message' => 'Order not found.'], 404);
+        return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
     }
 
 
@@ -156,7 +168,7 @@ class AdminController extends Controller
     }
 
 
-    public function adminLogin(request $request){
+    public function adminLogin(Request $request){
         $request->validate([
             'login_email'=>'required|email',
             'login_password'=>'required|min:1',
@@ -167,6 +179,13 @@ class AdminController extends Controller
             'password' => $request->login_password,
             'role' => 'admin',
         ])) {
+            $user = Auth::user();
+            
+            // Fixed: Check if admin account is active
+            if (strtolower($user->account_status) !== 'active') {
+                Auth::logout();
+                return back()->withErrors(['login_error' => 'Your account has been disabled.']);
+            }
 
             return redirect('admin/adminDashboard');
         }

@@ -342,7 +342,7 @@
             <div class="login-card">
                 <div class="login-header">
                     <h2><i class="fas fa-user-circle me-2"></i>Welcome Back</h2>
-                    <p>Lo in to your account</p>
+                    <p>Log in to your account</p>
                 </div>
                 
                 <div class="login-body">

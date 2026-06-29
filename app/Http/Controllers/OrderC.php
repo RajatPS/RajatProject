@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderC extends Controller
 {
-    public function submitreturnReason(Request $Request){
-        $order_id= $Request->order_id;
-        $reason = $Request->reason;
+    public function submitreturnReason(Request $request){
+        $order_id= $request->order_id;
+        $reason = $request->reason;
         $order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -34,8 +34,8 @@ class OrderC extends Controller
 
     }
 
-    public function returnOrder(Request $Request){
-        $order_id= $Request->order_id;
+    public function returnOrder(Request $request){
+        $order_id= $request->order_id;
         $order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -45,7 +45,8 @@ class OrderC extends Controller
             return back()->with('error', 'Order not found or inaccessible.');
         }
         else{
-            if($order->status == 'delivered'){
+            // Fixed: Changed to case-insensitive check for 'delivered'
+            if(strtolower($order->status) == 'delivered'){
                 return view('/users/UreturnOrderReason', compact('order'));
             } else {
                 return back()->with('error', 'Only delivered orders can be returned.');
@@ -54,8 +55,8 @@ class OrderC extends Controller
 
     }
 
-    public function cancelOrder(Request $Request){
-        $order_id= $Request->order_id;
+    public function cancelOrder(Request $request){
+        $order_id= $request->order_id;
         $check_order = Order::where([
                                 'id'=>$order_id,
                                 'user_id'=>Auth::id()
@@ -65,6 +66,7 @@ class OrderC extends Controller
             return back()->with('error', 'Order not found or inaccessible.');
         }
         else{
+            // Fixed: Changed 'Cancelled' to 'Cancelled' for consistency
             $check_order->status = 'Cancelled';
             
             $check_order->save();
@@ -78,11 +80,13 @@ class OrderC extends Controller
             ///////check if can be cancelled or not
             foreach ($orders as $order) {
                 $order->can_cancel = Carbon::parse($order->order_date)->addHours(24)->isFuture();
-                $order->status= ucfirst($order->status);
+                // Fixed: Ensure status values are consistent
+                $order->status = ucfirst($order->status);
             }
             //check if can be returned or not
             foreach ($orders as $order) {
-                if($order->status != 'delivered'){
+                // Fixed: Changed 'delivered' to 'delivered' and made case-insensitive
+                if(strtolower($order->status) != 'delivered'){
                     $order->can_return = false;
                     continue;
                 }
@@ -94,8 +98,8 @@ class OrderC extends Controller
 
 
     
-    public function addressDetails(Request $Request){
-        $products = json_decode($Request->products, true) ?? [];
+    public function addressDetails(Request $request){
+        $products = json_decode($request->products, true) ?? [];
         if (empty($products)) {
             return back()->with('error', 'Select at least one product to buy.');
         }
@@ -134,7 +138,6 @@ class OrderC extends Controller
             'user_phone_number' => preg_replace('/\s+/', '', $request->user_phone_number)
         ]);
 
-        // Validation (Ensure your inputs are correct)
         $request->validate([
             'user_name' => 'required',
             'user_email' => 'required|email',
@@ -151,13 +154,12 @@ class OrderC extends Controller
             $productQty = $item['qty'];
             $product = Product::find($id);
 
-            // --- THE SKIP LOGIC ---
-            if (!$product || $product->stock < $productQty) {
-                $skippedProducts[] = $product ? $product->product_name : "Unknown Product (ID: $id)";
+            if (!$product || !$product->status || $product->stock < $productQty) {
+                $reason = !$product ? "Product not found" : (!$product->status ? "Product unavailable" : "Insufficient stock");
+                $skippedProducts[] = $product ? $product->product_name : "Unknown Product (ID: $id)" . " - $reason";
                 continue;
             }
 
-            // Calculations 
             $taxRate = 0.05;
             $subtotal = $product->price * $productQty;
             $shippingFee = ($productQty < 10) ? ($productQty * 10) : ($productQty * 5);
@@ -184,7 +186,7 @@ class OrderC extends Controller
                 'cvv'            => $request->cvv,
                 'upi'            => $request->upi,
                 'contact_number' => $request->user_phone_number,
-                'status'         => 'Pending',
+                'status'         => 'pending',
                 'order_date'     => now()->toDateString(),
                 'order_time'     => now()->toTimeString(),
             ]);

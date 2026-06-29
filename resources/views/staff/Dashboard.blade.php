@@ -177,7 +177,7 @@
 </head>
 <body>
 
-    @include('layouts/staffnavbar')
+    @include('layouts.staffnavbar')
 
     <div class="dashboard-wrapper">
         <div class="stats-grid">
@@ -209,42 +209,14 @@
 
         <div class="tab-content" id="pills-tabContent">
 
-            {{-- PICKUP LIST --}}
-
-            @foreach($pickups as $pickup)
-            <div class="tab-pane fade show active" id="pickup-list">
-                <div class="order-list">
-                    <div class="order-card" data-id="9901">
-                        <div class="order-header">
-                            <span class="fw-bold text-muted">#ORD-{{$pickup->id}}</span>
-                            {{-- <span class="payment-status paid">PAID</span> --}}
-                        </div>
-                        <div class="customer-info">
-                            <h6>{{ $pickup->fullname }}</h6>
-                            <p><i class="fas fa-location-dot me-2"></i>{{ $pickup->address }}, {{ $pickup->city }}, {{ $pickup->zip }}</p>
-                            <a href="tel:+919876543210" class="phone-link mt-2">
-                                <i class="fas fa-phone-alt me-2"></i> +91 {{ $pickup->contact_number }}
-                            </a>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-card-scan" onclick="startScanner('{{ $pickup->id }}', 'pickup')">
-                                <i class="fas fa-barcode me-2"></i> SCAN PRODUCT
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-
             {{-- delivery list --}}
-            
-            @foreach($deliveries as $delivery)
-                <div class="tab-pane fade" id="delivery-list">
-                    <div class="order-list">
+            <div class="tab-pane fade" id="delivery-list">
+                <div class="order-list">
+                    @foreach($deliveries as $delivery)
                         <div class="order-card" style="border-left-color: #27ae60;" data-id="{{ $delivery->id }}">
                             <div class="order-header">
                                 <span class="fw-bold text-muted">#ORD-{{ $delivery->id }}</span>
-                                <span class="payment-status due">₹1,250 DUE</span>
+                                <span class="payment-status due">₹{{ $delivery->totalAmount }} DUE</span>
                             </div>
                             <div class="customer-info">
                                 <h6>{{ $delivery->fullname }}</h6>
@@ -259,9 +231,38 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
-            @endforeach
+            </div>
+
+            {{-- PICKUP LIST --}}
+
+            <div class="tab-pane fade show active" id="pickup-list">
+                <div class="order-list">
+                    @foreach($pickups as $pickup)
+                        <div class="order-card" data-id="{{ $pickup->id }}">
+                            <div class="order-header">
+                                <span class="fw-bold text-muted">#ORD-{{$pickup->id}}</span>
+                                {{-- <span class="payment-status paid">PAID</span> --}}
+                            </div>
+                            <div class="customer-info">
+                                <h6>{{ $pickup->fullname }}</h6>
+                                <p><i class="fas fa-location-dot me-2"></i>{{ $pickup->address }}, {{ $pickup->city }}, {{ $pickup->zip }}</p>
+                                <a href="tel:+919876543210" class="phone-link mt-2">
+                                    <i class="fas fa-phone-alt me-2"></i> +91 {{ $pickup->contact_number }}
+                                </a>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-card-scan" onclick="startScanner('{{ $pickup->id }}', 'pickup')">
+                                    <i class="fas fa-barcode me-2"></i> SCAN PRODUCT
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            
         </div>
     </div>
 
@@ -330,7 +331,7 @@
                     confirmButtonColor: '#27ae60'
                 }).then((result) => {
                     const status = result.isConfirmed ? 'Success' : (result.isDenied ? 'Failed' : 'Hold');
-                    updateDatabase(activeTargetId, status);
+                    updateDatabase(activeTargetId, status, decodedText);
                 });
             }
         }
@@ -360,23 +361,28 @@
         }
         
 
-        async function updateDatabase(id, status) {
+        async function updateDatabase(id, status, barcode = null) {
             try {
+                const payload = { order_id: id, status: status, type: activeMode };
+                if (barcode) payload.barcode = barcode;
+
                 const response = await fetch('/staff/deliverOrder', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({ order_id: id, status: status, type: activeMode })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     Swal.fire('Updated!', `Order marked as ${status}`, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Could not update order.', 'error');
                 }
             } catch (e) {
-                Swal.fire('Success', `Demo: Order #${id} updated to ${status}`, 'success');
+                Swal.fire('Error', `Network error updating order #${id}`, 'error');
             }
         }
 

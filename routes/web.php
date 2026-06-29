@@ -3,21 +3,21 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartC;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CategoryRequestController;
 use App\Http\Controllers\OrderC; 
 use App\Http\Controllers\Products;
+use App\Http\Controllers\Productimgs;
 use App\Http\Controllers\SellerC;
 use App\Http\Controllers\StaffC;
 use App\Http\Controllers\UserReviewC;
 use App\Http\Controllers\Users;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/', function () {
-//     return view('users.Uhome');
-// });
+// ============================== PUBLIC ROUTES ==============================
 
-// Route::get('Uhome', function () {
-//     return view('users.Uhome');
-// });
+Route::get('/', [Products::class, 'viewProducts']);
+Route::get('/Uproducts', [Products::class, 'viewProducts']);
 
 Route::get('Ufeatures', function () {
     return view('users.Ufeatures');
@@ -31,226 +31,222 @@ Route::get('Ucontact', function () {
     return view('users.Ucontact');
 });
 
-route::get('/',[Products::class,'viewProducts']);
-route::get('/Uproducts',[Products::class,'viewProducts']);
+// API Routes
+Route::get('/api/categories/active', [CategoryController::class, 'getActive']);
 
-/////////////////////////////////////////////////////////////////// users signup and login routes//////
+// ============================== USER AUTHENTICATION ==============================
 
 Route::get('users/Usignup', function () {
     return view('users.Usignup');
 });
-route::post('users/Usignup',[Users::class,'gmail'])->name('Usignup');
+Route::post('users/Usignup', [Users::class, 'gmail'])->name('Usignup');
 
 Route::get('/users/Ulogin', function () {
     return view('users.Ulogin');
 });
-route::post('users/Ulogin', [Users::class,'login'])->name('login');
+Route::post('users/Ulogin', [Users::class, 'login'])->name('login');
 
-Route::middleware(['auth',])->group(function () {
+// ============================== SELLER AUTHENTICATION ==============================
 
-        ///////////// users payments route ////////////////////////
-
-        // route::post('users/UplaceOrder',[OrderC::class,'placeOrder']);
-
-        ////////////////////////////////////////////////////////////////
-        //logout route
-        route::post('/users/Ulogout',[Users::class,'logout']);
-
-        ////users details
-        route::get('/users/Udetails',[Users::class,'user_details']);
-        route::post('/users/Udetails',[Users::class,'update_details']);
-
-        //edit details
-        route::get('/users/UeditDetails',[Users::class,'edit_details']);
-
-
-        /////////////////////////////////////////////////////////////////
-
-        Route::get('/forgot_password', function () {
-            return view('users/UforgotP');
-        });
-
-        Route::get('/csrf-token', function () {
-            return response()->json(['token' => csrf_token()]);
-        });
-
-        route::get('users/Ucart',[CartC::class,'cart']);                            //go to cart
-        route::post('/Ucart',[CartC::class,'addToCart'])->name('cart.add');         // add to cart
-        route::post('users/removeProductsFromCart',[CartC::class,'removeFromCart']);  // remove from cart
-
-        route::post('users/Ucheckout',[Products::class,'productcheckout']);  // checkout route
-        route::post('/users/Ubuyproduct',[OrderC::class,'addressDetails']);  // buy product route
-        route::post('/users/returnOrder',[OrderC::class,'returnOrder']);  // return order route
-        route::post('users/cancelOrder',[OrderC::class,'cancelOrder']);  // cancel order route
-        route::post('users/UreturnOrderReason',[OrderC::class,'returnOrderReason']);  // return reason order route
-        route::post('orders/returnReason',[OrderC::class,'submitreturnReason']);  // return reason order route
-        route::get("users/Uview_Orders",[OrderC::class,'userOrders']);  // user view orders route
-        route::get('users/Uproduct_details/{id}',[Products::class,'buyProduct']); // product details route
-        route:: get ('users/UsingleProduct/',[UserReviewC::class,'singleProductPage']);  // single product page route
-        route:: post ('users/review/',[UserReviewC::class,'addReview'])->name('addReview');  // add review route
-        route::get('users/help',function(){
-            return view('users.help');
-        });
-        route::post('users/search',[Users::class,'searchproduct']);
+Route::get('/seller/signup', function () {
+    return view('seller.sellerSignup');
 });
+Route::post('/seller/sendOtp', [SellerC::class, 'sendOTP']);
 
-// route::post('users/CardPayment',function(){
-//     return view('users.CardPayment');
-// });
-// route::post('users/CardPayment',[OrderC::class,'placeOrder']);
-
-// route::post('UpiPayment/',[OrderC::class,'upiPayment']);
-route::post('users/CodPayment/',[OrderC::class,'placeOrder']);
-route::get('users/CODPayment',[OrderC::class,'showOrderSummary']);
-
-        ////////////////////////////////   admin routes  ///////////////////////////////////////////////////////
-
-route:: get('admin/adminLogin',function(){
-    return view('admin/adminLogin');
-});
-route ::post('admin/adminLogin',[AdminController::class,'adminLogin']);
-
-
-route:: get('admin/adminSignup',function(){
-    return view('admin/adminSignup');
-});
-route:: post('admin/adminSignup',[AdminController::class,'adminSignup']);
-
-Route::middleware(['auth',])->group(function () {
-
-        route::get("admin/Aaddproducts",function(){
-            return view('admin.Aaddproducts');
-        });
-
-
-        route::get('admin/adminDashboard',[AdminController::class,'adminPanel']);
-
-        route::get('admin/Amanageorders',[OrderC::class,'viewOrders']); // add Products
-        route::post("admin/deleteOrder/",[AdminController::class,'deleteOrder']); // delete order
-        route::post("/admin/orders/{orderId}/update-status",[AdminController::class,'updateOrderStatus']); // update order status
-        Route::POST("Aaddproducts",[Products::class,'addProducts']);// admin view Products
-        Route::get('admin/Aproducts', [Products::class, 'index']);
-        Route::POST('admin/Aproducts/{id}/toggle', [Products::class, 'toggleStatus']);
-
-        route::get('admin/AdminUserManagement',[AdminController::class,'userManagement']);
-        route::post('/admin/users/{userId}/toggle-status',[AdminController::class,'updateUserStatus']);
-        route::post('admin/deleteUser',[AdminController::class,'deleteUser']);
-        route::post('admin/profile',[AdminController::class,'updateAdminProfile']);
-        route::post('admin/logout',[AdminController::class,'adminLogout']);
-
-
-
-        /////////////  edit Products details /////////////////////////////
-
-        Route::post('admin/AeditProducts', [Products::class, 'updateProducts']);
-
-
-        Route::post('admin/AdeleteProducts/{id}', [Products::class, 'deleteProducts']);
-
-        route::get('admin/salesSummary',[AdminController::class,'salesSummary'])->name('admin.dashboard');
-
-});
-
-route::get('admin/sidebar',function(){
-    return view('layouts.adminSidebar');
-});
-
-///////////////////////////////////  seller routes  ////////////////////////////////////////////////////////////////
-
-
-route::get('/seller/signup',function(){
-    return view('seller.sellersignup');
-});
-
-route::post('/seller/sendOtp',[SellerC::class,'sendOTP']);
-
-route::get('seller/sellerMatchOTP',function(){
+Route::get('seller/sellerMatchOTP', function () {
     return view('seller.sellerMatchOTP');
 });
+Route::post('/matchotp', [SellerC::class, 'matchotp']);
 
-route::post('/matchotp',[sellerC::class,'matchotp']);
-
-route::get('/seller/sellerDetails',function(){
+Route::get('/seller/sellerDetails', function () {
     return view('seller.sellerDetails');
 });
 
-
-
-route::get('/seller/sellerLogin',function(){
+Route::get('/seller/sellerLogin', function () {
     return view('seller/sellerLogin');
 });
+Route::post('/seller/login', [SellerC::class, 'sellerLogin']);
 
-route::post('/seller/login',[SellerC::class,'sellerLogin']);
-
+// Google OAuth
 Route::get('/auth/googlesignup', [AuthController::class, 'signupredirect']);
 Route::get('/auth/googlesignup/callback', [AuthController::class, 'signupcallback']);
-
-Route::get('seller/sellerDashboard', [sellerC::class, 'sellerDashboard']);
 
 Route::get('/auth/googlelogin', [SellerC::class, 'Loginredirect']);
 Route::get('/auth/googlelogin/callback', [SellerC::class, 'Logincallback']);
 
+Route::post('/seller/sellerSubmitDetails', [SellerC::class, 'sellerDetails']);
 
-route::get('/seller/sellerDetails',function(){
-    return view('seller.sellerDetails');
+// ============================== ADMIN AUTHENTICATION ==============================
+
+Route::get('admin/adminLogin', function () {
+    return view('admin/adminLogin');
+});
+Route::post('admin/adminLogin', [AdminController::class, 'adminLogin']);
+
+Route::get('admin/adminSignup', function () {
+    return view('admin/adminSignup');
+});
+Route::post('admin/adminSignup', [AdminController::class, 'adminSignup']);
+
+Route::get('admin/sidebar', function () {
+    return view('layouts.adminSidebar');
 });
 
-route::post('/seller/sellerSubmitDetails',[SellerC::class,'sellerDetails']);
-route::post('/seller/logout',[SellerC::class,'sellerLogout']);
+// ============================== AUTHENTICATED USER ROUTES ==============================
 
-
-Route::middleware(['auth',] )->group(function () {
-
-    route::get('seller/products/',[SellerC::class,'sellerProducts']);
-    route::get('seller/orders/',[sellerC::class,'sellerorderedProducts']);
-
-
-    route::post('/seller/orders/updateStatus/{id}',[sellerC::class,'updateStatus']);
-
-
-    route::post('seller/sellerEditProducts',[Products::class,'editProducts']);
-    route::post('seller/sellerDeleteProduct',[Products::class,'deleteProducts']);
-
-    route::get('seller/review/',function(){
-        return view('seller.sellerReview');
+Route::middleware(['auth'])->group(function () {
+    
+    // Logout
+    Route::post('/users/Ulogout', [Users::class, 'logout']);
+    
+    // User profile
+    Route::get('/users/Udetails', [Users::class, 'user_details']);
+    Route::post('/users/Udetails', [Users::class, 'update_details']);
+    Route::get('/users/UeditDetails', [Users::class, 'edit_details']);
+    
+    // Shopping
+    Route::get('users/Ucart', [CartC::class, 'cart']);
+    Route::post('/Ucart', [CartC::class, 'addToCart'])->name('cart.add');
+    Route::post('users/removeProductsFromCart', [CartC::class, 'removeFromCart']);
+    
+    // Checkout and Orders
+    Route::post('users/Ucheckout', [Products::class, 'productcheckout']);
+    Route::post('/users/Ubuyproduct', [OrderC::class, 'addressDetails']);
+    Route::post('/users/returnOrder', [OrderC::class, 'returnOrder']);
+    Route::post('users/cancelOrder', [OrderC::class, 'cancelOrder']);
+    Route::post('users/UreturnOrderReason', [OrderC::class, 'returnOrderReason']);
+    Route::post('orders/returnReason', [OrderC::class, 'submitreturnReason']);
+    Route::get('users/Uview_Orders', [OrderC::class, 'userOrders']);
+    Route::get('users/CODPayment', [OrderC::class, 'showOrderSummary']);
+    Route::post('users/CodPayment/', [OrderC::class, 'placeOrder']);
+    
+    // Product browsing
+    Route::get('users/Uproduct_details/{id}', [Products::class, 'buyProduct']);
+    Route::get('users/UsingleProduct/', [UserReviewC::class, 'singleProductPage']);
+    Route::post('users/review/', [UserReviewC::class, 'addReview'])->name('addReview');
+    
+    // Help
+    Route::get('users/help', function () {
+        return view('users.help');
     });
-
-    route::get('seller/payment/',function(){
-        return view('seller.sellerPayment');
+    Route::post('users/search', [Users::class, 'searchproduct']);
+    
+    Route::get('/forgot_password', function () {
+        return view('users/UforgotP');
     });
-
-    route::get('seller/selleraddProduct/',function(){
-        return view('seller.sellerAddproduct');
+    Route::get('/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
     });
+});
 
-    route::post('/seller/addproduct',[Products::class,'addProducts']);
+// ============================== AUTHENTICATED SELLER ROUTES ==============================
 
-    // route::get('seller/dashboard/',function(){
-    //     return view('seller/sellerHome');
+Route::middleware(['auth'])->group(function () {
+    
+    Route::get('seller/sellerDashboard', [SellerC::class, 'sellerDashboard']);
+    Route::get('seller/products/', [SellerC::class, 'sellerProducts']);
+    Route::get('seller/orders/', [SellerC::class, 'sellerorderedProducts']);
+    Route::post('seller/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);
+    
+    Route::post('seller/sellerEditProducts', [Products::class, 'editProducts']);
+    Route::post('seller/sellerDeleteProduct', [Products::class, 'deleteProducts']);
+
+    // just because the blade file is in admin folder so i am using route admin
+    Route::post('admin/AeditProducts', [Products::class, 'updateProducts']);
+    // Route::post('admin/AeditProducts',function(){
+    //     return "hello";
     // });
     
-
+    // Route::get('seller/AeditProducts', [Products::class, 'updateProducts']);  
+    
+    Route::get('seller/review/', function () {
+        return view('seller.sellerReview');
+    });
+    
+    Route::get('seller/payment/', function () {
+        return view('seller.sellerPayment');
+    });
+    
+    Route::get('seller/selleraddProduct/', function () {
+        return view('seller.sellerAddproduct');
+    });
+    
+    Route::post('/seller/addproduct', [Products::class, 'addProducts']);
+    Route::post('/seller/logout', [SellerC::class, 'sellerLogout']);
+    
+    // Category requests
+    Route::get('/seller/category-request', [CategoryRequestController::class, 'create']);
+    Route::post('/seller/category-request', [CategoryRequestController::class, 'store']);
+    Route::get('/seller/my-category-requests', [CategoryRequestController::class, 'myRequests']);
+    
+    // Product images (seller)
+    Route::post('/seller/product-images/add', [Productimgs::class, 'addProductImage']);
+    Route::delete('/seller/product-images/{id}', [Productimgs::class, 'deleteProductImage']);
 });
 
+// ============================== AUTHENTICATED STAFF ROUTES ==============================
 
-    ////////////////////////////////////////////////////////////////////////////////// staff////////////////////
+Route::get('staff/staffSignup', function () {
+    return view('staff.staffSignup');
+});
+Route::post('/staff/sendOtp', [StaffC::class, 'sendotp']);
 
-    route::get('staff/staffSignup',function(){
-        return view('staff.staffSignup');
-    });
-    route::post('/staff/sendOtp',[StaffC::class,'sendotp']);
+Route::get('staff/SignupDetails', function () {
+    return view('staff.SignupDetails');
+});
+Route::post('staff/submitSignupDetails', [StaffC::class, 'submitSignupDetails']);
 
-    route::get('staff/SignupDetails',function(){
-        return view('staff.SignupDetails');
-    });
-    route::post('staff/submitSignupDetails',[StaffC::class,'submitSignupDetails']);
+Route::middleware(['auth'])->group(function () {
+    Route::get('staff/Dashboard', [StaffC::class, 'staffDashboard']);
+    Route::get('staff/orders', [StaffC::class, 'staffOrders']);
+    Route::post('/staff/assign-order', [StaffC::class, 'assignOrder']);
+    Route::post('/staff/deliverOrder', [StaffC::class, 'deliverOrder']);
+});
+
+// ============================== AUTHENTICATED ADMIN ROUTES ==============================
+
+Route::middleware(['auth'])->group(function () {
     
-    route::get('staff/Dashboard',[StaffC::class,'staffDashboard']);
-    route::get('staff/orders',[StaffC::class,'staffOrders']);
-
-
-
-    // Route::post('/orders/updateStatus/{id}', [SellerC::class, 'updateStatus']);
-
-    Route::post('/staff/assign-order',[StaffC::class,'assignOrder']);
-    Route::post('/staff/deliverOrder',[StaffC::class,'deliverOrder']);
+    Route::get('admin/adminDashboard', [AdminController::class, 'adminPanel']);
+    
+    Route::get('admin/Amanageorders', [OrderC::class, 'viewOrders']);
+    Route::post('/admin/orders/{orderId}/update-status', [AdminController::class, 'updateOrderStatus']);
+    Route::post('/admin/deleteOrder/', [AdminController::class, 'deleteOrder']);
+    
+    Route::get('admin/Aaddproducts', function () {
+        return view('admin.Aaddproducts');
+    });
+    Route::post('Aaddproducts', [Products::class, 'addProducts']);
+    
+    Route::get('admin/Aproducts', [Products::class, 'index']);
+    Route::post('admin/Aproducts/{id}/toggle', [Products::class, 'toggleStatus']);
+    
+    Route::post('admin/AdeleteProducts/{id}', [Products::class, 'deleteProducts']);
+    
+    Route::get('admin/AdminUserManagement', [AdminController::class, 'userManagement']);
+    Route::post('/admin/users/{userId}/toggle-status', [AdminController::class, 'updateUserStatus']);
+    Route::post('admin/deleteUser', [AdminController::class, 'deleteUser']);
+    
+    Route::post('admin/profile', [AdminController::class, 'updateAdminProfile']);
+    Route::post('admin/logout', [AdminController::class, 'adminLogout']);
+    
+    Route::get('admin/salesSummary', [AdminController::class, 'salesSummary'])->name('admin.dashboard');
+    
+    // Category management (admin)
+    Route::get('admin/categories', [CategoryController::class, 'index']);
+    Route::get('admin/categories/create', [CategoryController::class, 'create']);
+    Route::post('admin/categories', [CategoryController::class, 'store']);
+    Route::get('admin/categories/{id}', [CategoryController::class, 'show']);
+    Route::get('admin/categories/{id}/edit', [CategoryController::class, 'edit']);
+    Route::put('admin/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('admin/categories/{id}', [CategoryController::class, 'destroy']);
+    
+    // Category requests (admin)
+    Route::get('admin/category-requests', [CategoryController::class, 'showRequests']);
+    Route::post('admin/category-requests/{id}/approve', [CategoryController::class, 'approveRequest']);
+    Route::post('admin/category-requests/{id}/reject', [CategoryController::class, 'rejectRequest']);
+    
+    // Product images (admin)
+    Route::post('/admin/product-images/add', [Productimgs::class, 'addProductImage']);
+    Route::delete('/admin/product-images/{id}', [Productimgs::class, 'deleteProductImage']);
+});

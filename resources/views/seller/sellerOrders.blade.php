@@ -65,7 +65,7 @@
 
     /* Status Tags */
     .badge {
-        padding: 6px 12px;
+        padding: 6px 6px;
         border-radius: 6px;
         font-size: 0.7rem;
         font-weight: bold;
@@ -101,10 +101,11 @@
 
     <div class="order-filters">
         <button class="filter-btn active" data-status="all">All Orders</button>
-        <button class="filter-btn" data-status="Pending">In Processing</button>
-        <button class="filter-btn" data-status="Confirmed">Shipping</button>
-        <button class="filter-btn" data-status="Delivered">Delivered</button>
-        <button class="filter-btn" data-status="Cancelled">Returned/Disputed</button>
+        <button class="filter-btn" data-status="pending">In Processing</button>
+        <button class="filter-btn" data-status="confirmed">Confirmed</button>
+        <button class="filter-btn" data-status="offDelivery">Shipping</button>
+        <button class="filter-btn" data-status="delivered">Delivered</button>
+        <button class="filter-btn" data-status="cancelled">Returned/Disputed/Cancelled</button>
     </div>
 
    
@@ -122,42 +123,50 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($products as $product)
-                    @foreach($product->orders as $order)
-                        <tr class="order-row">
-                            <td>
-                                <strong>Order Id:{{ $order->id }}</strong> <br>
-                                <strong>Product Id: {{ $order->product_id }}</strong>
-                                <small style="display:block; opacity: 0.6;">{{ $order->order_date->format('M j, Y') }}</small>
-                            </td>
-                            <td class="customer-info">
-                                {{ $order->fullname}}
-                                <small>{{ $order->address}}</small>
-                            </td>
-                            <td>{{ $order->quantity}} item(s)</td>
-                            <td><span class="tracking-code">TRK9400122</span></td>
-                            <td>₹{{ number_format($order->totalAmount, 2) }}</td>
-                            <td><span class="badge bg-shipped">{{ $order->status }}</span></td>
-                            <td>
-                                @if($order->status === 'Pending')
-                                <button title="Alter Status" 
-                                        id="alter-btn" 
-                                        onclick="openStatusChangeModal('{{ $order->id }}', '{{ $order->status }}')">
-                                    <i class="fas fa-toggle-on"></i>
-                                </button>
-                                @elseif($order->status === 'Confirmed')
-                                <button title="Generate QR" 
-                                        id="QR-btn" 
-                                        onclick="generateQRCode('{{ $order->id }}')">
-                                    <i class="fas fa-qrcode"></i>
-                                </button>
-                                @endif
+                @forelse($orders as $order)
+                    <tr class="order-row">
+                        <td>
+                            <strong>Order Id: {{ $order->id }}</strong> <br>
+                            <strong>Product Id: {{ $order->product_id }}</strong>
+                            <small style="display:block; opacity: 0.6;">{{ $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('M j, Y') : 'N/A' }}</small>
+                        </td>
+                        <td class="customer-info">
+                            {{ $order->fullname}}
+                            <small>{{ $order->address}}</small>
+                        </td>
+                        <td>{{ $order->quantity}} item(s)</td>
+                        <td><span class="tracking-code">TRK9400122</span></td>
+                        <td>₹{{ number_format($order->totalAmount, 2) }}</td>
+                        <td><span class="badge bg-shipped">{{ $order->status }}</span></td>
+                        <td>
+                            @if($order->status === 'pending')
+                            <button title="Alter Status" 
+                                    id="alter-btn" 
+                                    onclick="openStatusChangeModal('{{ $order->id }}', '{{ $order->status }}')">
+                                <i class="fas fa-toggle-on"></i>
+                            </button>
+                            @elseif($order->status === 'confirmed')
+                            <button title="Generate QR" 
+                                    id="QR-btn" 
+                                    onclick="generateQRCode('{{ $order->id }}')">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                            @endif
 
-                                <button title="Print Label"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                    @endforeach
-                @endforeach 
+                            <button title="Print Label"><i class="fas fa-print"></i></button>
+                            <button class="generate-qr-btn" onclick="generateQRCode()">
+                                <i class="fas fa-qrcode"></i> Generate QR
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: rgba(255, 255, 255, 0.6);">
+                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            No orders found for your products
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
@@ -173,8 +182,8 @@
             input: 'select', 
             
             inputOptions: {
-                'Confirmed': 'Confirm',
-                'Cancelled': 'Cancel'
+                'Confirmed': 'confirmed',
+                'Cancelled': 'cancelled'
             },
             
             inputValue: currentStatus, 
@@ -193,19 +202,16 @@
                     return 'You must select a new status!';
                 }
             }
-        }).then((result) => {
+        })
+        .then((result) => {
             if (result.isConfirmed && result.value) {
                 const selectedStatus = result.value;
                 console.log(orderId, selectedStatus);
 
-                const formData = new FormData();
-
-                formData.append('orderId', orderId);
-                formData.append('status', selectedStatus);
-
-                fetch('/seller/orders/updateStatus/', {
+                fetch(`/seller/orders/updateStatus/${orderId}`, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },

@@ -15,6 +15,7 @@ class StaffC extends Controller
             return redirect('seller/sellerLogin')->withErrors(['error' => 'Please log in to access the dashboard.']);
         }
         $user = Auth::user();
+        // Fixed: Standardized status values to match database (lowercase)
         $deliveries = Order::with('product')->where('staff_id', $user->id)->whereIn('status', ['offDelivery', 'delivered'])->get();
         $pickups = Order::with('product')->where('staff_id', $user->id)->where('status', 'pickup')->get();
         return view('staff.orders', compact('deliveries', 'pickups', 'user'));  
@@ -22,24 +23,66 @@ class StaffC extends Controller
 
     public function deliverOrder(Request $request){
         $orderId = $request->order_id;
+        $barcode = $request->barcode ?? null;
         $staff_id = Auth::id();
 
-        $order= Order::where('staff_id', $staff_id)->where('id', $orderId)->first();
-        
-        if($order && $order->status === 'offDelivery'){
-            $order->status = 'delivered';
-            $order->delivered_at = now();
-            $order->save();
-        } else {
+        // Require scanned barcode (or explicit product_id) to prevent random scans marking deliveries
+        if (!$barcode && !$request->product_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No scanned value provided. Scan the product QR before marking delivered.'
+            ]);
+        }
+
+        // Try to extract product id from barcode if present
+        $productId = $request->product_id ?? null;
+        if ($barcode && !$productId) {
+            $parts = explode('|', $barcode);
+            foreach ($parts as $p) {
+                if (stripos($p, 'ProductID') !== false) {
+                    $productId = trim(str_replace(['ProductID:', 'ProductID=', 'ProductID'], '', $p));
+                    break;
+                }
+            }
+            // fallback: extract first integer found
+            if (!$productId) {
+                if (preg_match('/(\d+)/', $barcode, $m)) {
+                    $productId = $m[1];
+                }
+            }
+        }
+
+        $order = Order::where('staff_id', $staff_id)->where('id', $orderId)->first();
+
+        if (!$order) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found or not assigned to you.'
             ]);
         }
 
+        if ($order->status !== 'offDelivery') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order is not currently out for delivery.'
+            ]);
+        }
+
+        // If we have a product id from the scan, ensure it matches the order's product
+        if ($productId && $order->product_id != $productId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Scanned product does not match this order.'
+            ]);
+        }
+
+        $order->status = 'delivered';
+        $order->delivered_at = now();
+        $order->save();
+
         return response()->json([
             'success' => true,
-            'order_id' => $orderId,  
+            'order_id' => $orderId,
             'staff_id' => $staff_id,
         ]);
 
@@ -48,7 +91,6 @@ class StaffC extends Controller
     public function assignOrder(Request $request){
         $rawData = $request->barcode; 
 
-        // 2. Split the string into the two IDs
         $parts = explode('|', $rawData);
         $orderId = str_replace('OrderID:', '', $parts[0]);
         $productId = str_replace('ProductID:', '', $parts[1] ?? '');
@@ -81,7 +123,7 @@ class StaffC extends Controller
         // $deliveries = Order::with('product')->get();
         $deliveries = Order::with('product')->where('status', 'offDelivery')->get();
         $pickups = Order::with('product')->where('status', 'pickup')->get();
-        return view('staff.dashboard', compact('deliveries', 'pickups', 'user'));
+        return view('staff.Dashboard', compact('deliveries', 'pickups', 'user'));
     }
 
 
@@ -110,7 +152,7 @@ class StaffC extends Controller
             $user = User::create([
                 'name' => $request->name.' '.$request->last_name,
                 'email' => $request->email,
-                'phone' => session('staff_phone'),
+                'phone_number' => session('phone'),
                 'password' => bcrypt($request->password),
                 'address' => $request->address . ', ' . $request->city . ', ' . $request->state,
                 'zip' => $request->zip,
@@ -124,10 +166,11 @@ class StaffC extends Controller
                 'license_no' => $request->license_no,
             ]);
 
-            session()->forget(['otp', 'staff_phone', 'otp_source']);
+            session()->forget(['otp', 'phone', 'otp_source']);
 
+            // Fixed: Redirect to staff login, not seller login
             return redirect('seller/sellerLogin')
-                ->with('success', 'Staff registered successfully.');
+                ->with('success', 'Staff registered successfully. Please log in.');
 
         } 
         catch (\Exception $e) {

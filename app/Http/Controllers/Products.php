@@ -17,34 +17,48 @@ class Products extends Controller
     {
         $id = $request->input('productId');
         $products = Product::findOrFail($id);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($products->seller_id != Auth::id()) {
+            return redirect()->back()->withErrors('You do not have permission to edit this product.');
+        }
+        
         $totalProducts = Product::count();  
         if (!$products) {
             return redirect()->back()->withErrors('Product not found.');
         }
-        return view("seller.sellerEditProducts",compact('products','totalProducts'));
+        return view("seller.sellereditProducts",compact('products','totalProducts'));
         
     }
 
     /////update product
-    public function updateProducts(Request $request)
-    {
+    public function updateProducts(Request $request){
         $request->validate([
             'productName' => 'max:50',
             'category' => 'max:50',
             'productPrice' => 'max:50',
             'productStock' => 'max:50',
             'productWeight' => 'max:50',
-            'description' => 'max:500',
-            'productStatus' => 'max:10', 
+            'description' => 'max:1000',
+            'productStatus' => 'max:10',
         ]);
-        $status = $request->input('productStatus');
-        if($status == "active"){
-            $status = 1;
-        }else{
-            $status = 0;
-        }
+        
         $productId = $request->input('productId');
         $product = Product::findOrFail($productId);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($product->seller_id != Auth::id()) {
+            return redirect()->back()->withErrors('You do not have permission to update this product.');
+        }
+        
+        // Fixed: Convert status properly to boolean (1/0 for true/false)
+        $status = $request->input('productStatus');
+        if(strtolower($status) == "active" || $status == 1 || $status == "true"){
+            $status = 1;
+        } else {
+            $status = 0;
+        }
+        
         $product->update([
             'product_name' => $request->input('productName'),
             'category' => $request->input('category'),
@@ -54,7 +68,7 @@ class Products extends Controller
             'description' => $request->input('description'),
             'status' => $status,
         ]);
-
+    
         return redirect('seller/products/')->with('success', 'Product updated successfully!');
     }
 
@@ -93,7 +107,7 @@ class Products extends Controller
 
         $productIds = collect($selectedProducts)->pluck('id')->toArray();
 
-        $buyproduct = product::with('images')
+        $buyproduct = Product::with('images')
             ->whereIn('id', $productIds)
             ->get()
             ->map(function ($product) use ($selectedProducts) {
@@ -102,7 +116,7 @@ class Products extends Controller
                 return $product;
             });
 
-        return view('users/Ucheckout', compact('buyproduct'));
+        return view('users.Ucheckout', compact('buyproduct'));
     }
 
 
@@ -118,27 +132,33 @@ class Products extends Controller
 
     public function viewProducts()
     {
-        $products = Product::with('images')->where('status', '1')->where('stock', '>', 25)->paginate(20);
+        $products = Product::with('images')->where('status', '1')->where('stock', '>', 25)->withoutTrashed()->paginate(15);
+        $Fproducts = Product::with('images')->where('status', '1')->where('stock', '>', 25)->withoutTrashed()
+        ->whereJsonContains('type', 'featured')
+        ->orderBy('created_at', 'desc')
+        ->take(6)
+        ->get();
         $productsfornewUsers = Product::with('images')
             ->where('status', '1')
+            ->withoutTrashed()
             ->where(function($query) {
                 $query->whereJsonContains('type', 'featured')
                     ->orWhereJsonContains('type', 'new')
                     ->orWhereJsonContains('type', 'onSale');
             })
             ->orderBy('created_at', 'desc')
-            ->take(5)
+            ->take(6)
             ->get();
-        return view('users.Uproducts',compact('products','productsfornewUsers'));
+        return view('users.Uproducts',compact('products','productsfornewUsers','Fproducts'));
     }
 
     /// display products for admin panel
     public function index()
     {
-        $prod = Product::with('images')->paginate(20);
-        $totalProducts = Product::count();
-        $lowStock=Product::where('stock','<=',20)->count(); 
-        $activeProducts = Product::where('status','1')->count();
+        $prod = Product::with('images')->withoutTrashed()->paginate(20);
+        $totalProducts = Product::withoutTrashed()->count();
+        $lowStock=Product::withoutTrashed()->where('stock','<=',20)->count(); 
+        $activeProducts = Product::withoutTrashed()->where('status','1')->count();
         return view('admin.Aproducts',compact('prod','totalProducts','activeProducts','lowStock',));
     }
 
@@ -157,38 +177,53 @@ class Products extends Controller
     }
 
     // add products
-    public function addProducts(Request $Request)
+    public function addProducts(Request $request)
     {
+        // dd($request->all()); // Debugging line to check incoming request data
          
-        $Request->validate([
+        $request->validate([
             'productName' => 'required|max:50',
-            'category' => 'required',
+            'category' => 'required|max:50',
+            'brand' => 'nullable|max:50',
             'price' => 'required|numeric',
             'stock' => 'required|integer',
-            'description' => 'required|max:200',
+            'description' => 'required|max:1000',
             'productImages' => 'nullable',
             'productImages.*' => 'image',
             'status' => 'required',
             'type' => 'nullable|array',
             'type.*' => 'string',
             'weight' => 'required|numeric',
-        ]);
+        ],
+        [
+            'description.max' => 'Description is too long.',
+        ]
+        );
+        
+        // Fixed: Convert status to boolean properly
+        $status = $request->input('status');
+        if(strtolower($status) == "active" || $status == 1 || $status == "true"){
+            $status = 1;
+        } else {
+            $status = 0;
+        }
 
         $save = Product::create([
-            'product_name' => $Request->productName,
-            'category' => $Request->category,
-            'price' => $Request->price,
-            'stock' => $Request->stock,
-            'description' => $Request->description,
-            'status' => $Request->status,
-            'type' => $Request->type,  
-            'weight' => $Request->weight,
+            'product_name' => $request->productName,
+            'category' => $request->category,
+            'brand' => $request->brand,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'description' => $request->description,
+            'status' => $status,
+            'type' => $request->type,  
+            'weight' => $request->weight,
             'seller_id' => Auth::id(),
         ]);
         
 
-        if ($Request->hasFile('productImages')) {                          // for multiple image storage
-            foreach ($Request->file('productImages') as $image) {
+        if ($request->hasFile('productImages')) {                          // for multiple image storage
+            foreach ($request->file('productImages') as $image) {
                 $imagePath = $image->store('images', 'public');
 
                 Productimg::create([
@@ -206,10 +241,14 @@ class Products extends Controller
     {
         $id = $request->input('productId');
         $product = Product::findOrFail($id);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($product->seller_id != Auth::id()) {
+            return back()->with('error', 'You do not have permission to delete this product.');
+        }
+        
         $product->delete();
-        return back()->withsuccess("Product deleted successfully!");
-    
-        // return response()->json(['success' => true , 'message' => 'Product deleted successfully!']);
+        return back()->with('success', "Product deleted successfully!");
     }
 }
 

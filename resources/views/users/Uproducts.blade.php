@@ -343,27 +343,6 @@
             </div>
         </section>
 
-        <section class="filter-section">
-            <div class="container">
-                <div class="filter-card">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <h5 class="mb-3 mb-md-0 text-white fw-bold">Filter by Category:</h5>
-                        </div>
-                        <div class="col-md-9 text-md-start text-center">
-                            <button class="btn filter-btn active" data-filter="all">All Products</button>
-                            <button class="btn filter-btn" data-filter="Books">Books</button>
-                            <button class="btn filter-btn" data-filter="Note books">Note Books</button>
-                            <button class="btn filter-btn" data-filter="pens">Pens</button>
-                            <button class="btn filter-btn" data-filter="pencils">Pencils</button>
-                            <button class="btn filter-btn" data-filter="sharpners">Sharpners</button>
-                            <button class="btn filter-btn" data-filter="erasers">Erasers</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <section class="products-section">
             <div class="container">
                 <div class="row g-4" id="productsContainer">
@@ -401,6 +380,13 @@
                         </div>
                     @endforeach
                 </div>
+            </div>
+        </section>
+
+
+        <section class="hero-section">
+            <div class="container">
+                <h5 class="hero-title">Login to Access More Products !</h5>
             </div>
         </section>
     </div>
@@ -459,6 +445,9 @@
         </div>
     </div>
 
+        
+        
+
     @include('layouts.footer')
         
     @else
@@ -466,37 +455,69 @@
     @include('layouts.messages')
     @include('layouts.ajaxMsg')
     
-    <div id="page-wrapper">
+    <div id="page-wrapper" class="pb-4">
         @include('layouts.navbar')
-        
-        <section class="hero-section">
-            <div class="container">
-                <h5 class="hero-title">Our Premium Products</h5>
-            </div>
-        </section>
 
-        <section class="filter-section">
+
+
+
+
+
+        @if(request()->get('page', 1) == 1 && $Fproducts->isNotEmpty())
+        <section class="products-section">
+            <section class="hero-section">
+                <div class="container">
+                    <h5 class="hero-title">Featured Products</h5>
+                </div>
+            </section>
             <div class="container">
-                <div class="filter-card">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <h5 class="mb-3 mb-md-0 text-white fw-bold">Filter by Category:</h5>
+                <div class="row g-4" id="productsContainer">
+                    @foreach ($Fproducts as $product)
+                        <div class="col-xl-4 col-lg-6 col-sm-6" data-category="{{ $product->category }}">
+                            <div class="card product-card">
+                                <div class="product-image" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#productDetailModal"
+                                    data-id="{{ $product->id }}" 
+                                    data-product-name="{{ $product->product_name }}"
+                                    data-product-price="₹ {{ $product->price }}"
+                                    data-product-description="{{ $product->description }}"
+                                    data-product-category="{{ $product->category }}"
+                                    data-product-image="{{ asset('storage/'.optional($product->images->first())->image) }}">
+                                    
+                                    <img src="{{ asset('storage/'.optional($product->images->first())->image) }}" alt="{{$product->product_name}}" style="object-fit: contain;">
+                                    <span class="category-badge">{{$product->category}}</span>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{$product->product_name}}</h5> 
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="rating">
+                                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                                            <span class="text-white-50 ms-1 small">(4.5)</span>
+                                        </div>
+                                        <span class="price-tag">₹ {{$product->price}}</span> 
+                                    </div>
+                                    <p class="card-text text-truncate">{{$product->description}}</p>
+                                    <button type="button" class="btn btn-product mt-auto" onclick="addToCart({{ $product->id }})">
+                                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-9 text-md-start text-center">
-                            <button class="btn filter-btn active" data-filter="all">All Products</button>
-                            <button class="btn filter-btn" data-filter="Books">Books</button>
-                            <button class="btn filter-btn" data-filter="note Book">Note Books</button>
-                            <button class="btn filter-btn" data-filter="pens">Pens</button>
-                            <button class="btn filter-btn" data-filter="pencils">Pencils</button>
-                            <button class="btn filter-btn" data-filter="sharpners">Sharpners</button>
-                            <button class="btn filter-btn" data-filter="erasers">Erasers</button>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
-        </section>
+            @endif
 
-        <section class="products-section">
+
+
+            <section class="hero-section">
+                <div class="container">
+                    <h5 class="hero-title">All Products</h5>
+                </div>
+            </section>
+
+
             <div class="container">
                 <div class="row g-4" id="productsContainer">
                     @foreach ($products as $product)
@@ -534,8 +555,16 @@
                     @endforeach
                 </div>
             </div>
+
+
         </section>
     </div>
+
+
+
+<div class="d-flex justify-content-center mt-4">
+    {{ $products->links('pagination::bootstrap-5') }}
+</div>
 
     <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -583,7 +612,7 @@
                                     <i class="bi bi-cart-plus me-2"></i> Add to Cart
                                 </button>
                                 
-                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct?product_id=' . $product->id) }}">
+                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct') }}">
                                     @csrf
                                     <input type="hidden" name="product_id" id="modal-input-id-view">
                                     <button type="submit" class="btn modal-button3 w-100">
@@ -646,14 +675,14 @@
 
    
     document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. DROPDOWN INITIALIZATION ---
+        // ---  DROPDOWN INITIALIZATION ---
         // Manually force dropdowns to work to bypass previous JSON "static" errors
         const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
         dropdownElementList.map(function (dropdownToggleEl) {
             return new bootstrap.Dropdown(dropdownToggleEl);
         });
 
-        // --- 2. MODAL POPULATION LOGIC ---
+        // --- MODAL POPULATION LOGIC ---
         const modalElement = document.getElementById('productDetailModal'); 
         
         if (modalElement) {
@@ -695,31 +724,30 @@
             });
         }
 
-        // --- 3. CATEGORY FILTERING LOGIC ---
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const productCards = document.querySelectorAll('.col-xl-4');
+        // ---  CATEGORY FILTERING LOGIC ---
+        // const filterButtons = document.querySelectorAll('.filter-btn');
+        // const productCards = document.querySelectorAll('.col-xl-4');
         
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const filterValue = button.getAttribute('data-filter');
+        // filterButtons.forEach(button => {
+        //     button.addEventListener('click', () => {
+        //         const filterValue = button.getAttribute('data-filter').toLowerCase();
                 
-                // Update active button state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
+        //         filterButtons.forEach(btn => btn.classList.remove('active'));
+        //         button.classList.add('active');
                 
-                // Toggle card visibility
-                productCards.forEach(card => {
-                    const cardCategory = card.getAttribute('data-category');
-                    if (filterValue === 'all' || cardCategory === filterValue) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
+        //         productCards.forEach(card => {
+        //             const cardCategory = card.getAttribute('data-category').toLowerCase();
+                    
+        //             if (filterValue === 'all' || cardCategory.includes(filterValue)) {
+        //                 card.style.display = 'block';
+        //             } else {
+        //                 card.style.display = 'none';
+        //             }
+        //         });
+        //     });
+        // });
 
-        // --- 4. SEARCH BUTTON LOGIC (From your Navbar) ---
+        // ---  SEARCH BUTTON LOGIC (From your Navbar) ---
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', function() {
