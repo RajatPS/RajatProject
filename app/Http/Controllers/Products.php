@@ -17,11 +17,17 @@ class Products extends Controller
     {
         $id = $request->input('productId');
         $products = Product::findOrFail($id);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($products->seller_id != Auth::id()) {
+            return redirect()->back()->withErrors('You do not have permission to edit this product.');
+        }
+        
         $totalProducts = Product::count();  
         if (!$products) {
             return redirect()->back()->withErrors('Product not found.');
         }
-        return view("seller.sellerEditProducts",compact('products','totalProducts'));
+        return view("seller.sellereditProducts",compact('products','totalProducts'));
         
     }
 
@@ -37,14 +43,22 @@ class Products extends Controller
             'description' => 'max:500',
             'productStatus' => 'max:10', 
         ]);
-        $status = $request->input('productStatus');
-        if($status == "active"){
-            $status = 1;
-        }else{
-            $status = 0;
-        }
         $productId = $request->input('productId');
         $product = Product::findOrFail($productId);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($product->seller_id != Auth::id()) {
+            return redirect()->back()->withErrors('You do not have permission to update this product.');
+        }
+        
+        // Fixed: Convert status properly to boolean (1/0 for true/false)
+        $status = $request->input('productStatus');
+        if(strtolower($status) == "active" || $status == 1 || $status == "true"){
+            $status = 1;
+        } else {
+            $status = 0;
+        }
+        
         $product->update([
             'product_name' => $request->input('productName'),
             'category' => $request->input('category'),
@@ -93,7 +107,7 @@ class Products extends Controller
 
         $productIds = collect($selectedProducts)->pluck('id')->toArray();
 
-        $buyproduct = product::with('images')
+        $buyproduct = Product::with('images')
             ->whereIn('id', $productIds)
             ->get()
             ->map(function ($product) use ($selectedProducts) {
@@ -157,10 +171,10 @@ class Products extends Controller
     }
 
     // add products
-    public function addProducts(Request $Request)
+    public function addProducts(Request $request)
     {
          
-        $Request->validate([
+        $request->validate([
             'productName' => 'required|max:50',
             'category' => 'required',
             'price' => 'required|numeric',
@@ -173,22 +187,30 @@ class Products extends Controller
             'type.*' => 'string',
             'weight' => 'required|numeric',
         ]);
+        
+        // Fixed: Convert status to boolean properly
+        $status = $request->input('status');
+        if(strtolower($status) == "active" || $status == 1 || $status == "true"){
+            $status = 1;
+        } else {
+            $status = 0;
+        }
 
         $save = Product::create([
-            'product_name' => $Request->productName,
-            'category' => $Request->category,
-            'price' => $Request->price,
-            'stock' => $Request->stock,
-            'description' => $Request->description,
-            'status' => $Request->status,
-            'type' => $Request->type,  
-            'weight' => $Request->weight,
+            'product_name' => $request->productName,
+            'category' => $request->category,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'description' => $request->description,
+            'status' => $status,
+            'type' => $request->type,  
+            'weight' => $request->weight,
             'seller_id' => Auth::id(),
         ]);
         
 
-        if ($Request->hasFile('productImages')) {                          // for multiple image storage
-            foreach ($Request->file('productImages') as $image) {
+        if ($request->hasFile('productImages')) {                          // for multiple image storage
+            foreach ($request->file('productImages') as $image) {
                 $imagePath = $image->store('images', 'public');
 
                 Productimg::create([
@@ -206,10 +228,14 @@ class Products extends Controller
     {
         $id = $request->input('productId');
         $product = Product::findOrFail($id);
+        
+        // Authorization: Check if the product belongs to the current seller
+        if ($product->seller_id != Auth::id()) {
+            return back()->with('error', 'You do not have permission to delete this product.');
+        }
+        
         $product->delete();
-        return back()->withsuccess("Product deleted successfully!");
-    
-        // return response()->json(['success' => true , 'message' => 'Product deleted successfully!']);
+        return back()->with('success', "Product deleted successfully!");
     }
 }
 

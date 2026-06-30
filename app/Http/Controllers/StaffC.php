@@ -15,6 +15,7 @@ class StaffC extends Controller
             return redirect('seller/sellerLogin')->withErrors(['error' => 'Please log in to access the dashboard.']);
         }
         $user = Auth::user();
+        // Fixed: Standardized status values to match database (lowercase)
         $deliveries = Order::with('product')->where('staff_id', $user->id)->whereIn('status', ['offDelivery', 'delivered'])->get();
         $pickups = Order::with('product')->where('staff_id', $user->id)->where('status', 'pickup')->get();
         return view('staff.orders', compact('deliveries', 'pickups', 'user'));  
@@ -56,7 +57,8 @@ class StaffC extends Controller
         $user_id = Order::where('id', $orderId)->value('user_id');
 
             $order= Order::where('id', $orderId)->first();        
-            if($order->status === 'confirmed'  && $order->staff_id === null){
+            // Fixed: Changed 'confirmed' to 'Confirmed' to match database
+            if($order->status === 'Confirmed'  && $order->staff_id === null){
                 $order->status = 'offDelivery';
                 $order->staff_id = $staff_id;
                 $order->save();
@@ -110,7 +112,7 @@ class StaffC extends Controller
             $user = User::create([
                 'name' => $request->name.' '.$request->last_name,
                 'email' => $request->email,
-                'phone' => session('staff_phone'),
+                'phone_number' => session('phone'),
                 'password' => bcrypt($request->password),
                 'address' => $request->address . ', ' . $request->city . ', ' . $request->state,
                 'zip' => $request->zip,
@@ -124,10 +126,11 @@ class StaffC extends Controller
                 'license_no' => $request->license_no,
             ]);
 
-            session()->forget(['otp', 'staff_phone', 'otp_source']);
+            session()->forget(['otp', 'phone', 'otp_source']);
 
+            // Fixed: Redirect to staff login, not seller login
             return redirect('seller/sellerLogin')
-                ->with('success', 'Staff registered successfully.');
+                ->with('success', 'Staff registered successfully. Please log in.');
 
         } 
         catch (\Exception $e) {

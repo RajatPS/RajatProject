@@ -484,8 +484,8 @@
                         </div>
                         <div class="col-md-9 text-md-start text-center">
                             <button class="btn filter-btn active" data-filter="all">All Products</button>
-                            <button class="btn filter-btn" data-filter="Books">Books</button>
-                            <button class="btn filter-btn" data-filter="note Book">Note Books</button>
+                            <button class="btn filter-btn" data-filter="Text books">Books</button>
+                            <button class="btn filter-btn" data-filter="Note books">Note Books</button>
                             <button class="btn filter-btn" data-filter="pens">Pens</button>
                             <button class="btn filter-btn" data-filter="pencils">Pencils</button>
                             <button class="btn filter-btn" data-filter="sharpners">Sharpners</button>
@@ -583,7 +583,7 @@
                                     <i class="bi bi-cart-plus me-2"></i> Add to Cart
                                 </button>
                                 
-                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct?product_id=' . $product->id) }}">
+                                <form id="viewProductForm" method="GET" action="{{ url('users/UsingleProduct') }}">
                                     @csrf
                                     <input type="hidden" name="product_id" id="modal-input-id-view">
                                     <button type="submit" class="btn modal-button3 w-100">
@@ -646,14 +646,14 @@
 
    
     document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. DROPDOWN INITIALIZATION ---
+        // ---  DROPDOWN INITIALIZATION ---
         // Manually force dropdowns to work to bypass previous JSON "static" errors
         const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
         dropdownElementList.map(function (dropdownToggleEl) {
             return new bootstrap.Dropdown(dropdownToggleEl);
         });
 
-        // --- 2. MODAL POPULATION LOGIC ---
+        // --- MODAL POPULATION LOGIC ---
         const modalElement = document.getElementById('productDetailModal'); 
         
         if (modalElement) {
@@ -695,7 +695,7 @@
             });
         }
 
-        // --- 3. CATEGORY FILTERING LOGIC ---
+        // ---  CATEGORY FILTERING LOGIC ---
         const filterButtons = document.querySelectorAll('.filter-btn');
         const productCards = document.querySelectorAll('.col-xl-4');
         
@@ -719,7 +719,7 @@
             });
         });
 
-        // --- 4. SEARCH BUTTON LOGIC (From your Navbar) ---
+        // ---  SEARCH BUTTON LOGIC (From your Navbar) ---
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', function() {

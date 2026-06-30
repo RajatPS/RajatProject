@@ -48,6 +48,29 @@ class cartC extends Controller
             
         }
         else{
+            // Fixed: Verify product exists, is active, and has stock
+            $product = Product::find($productId);
+            if (!$product) {
+                return response()->json([
+                    'success'=>false,
+                    'message'=>'Product not found.',
+                ]);
+            }
+            
+            if (!$product->status) {
+                return response()->json([
+                    'success'=>false,
+                    'message'=>'This product is no longer available.',
+                ]);
+            }
+            
+            if ($product->stock < 1) {
+                return response()->json([
+                    'success'=>false,
+                    'message'=>'This product is out of stock.',
+                ]);
+            }
+            
             if ($existingItem){
                 $existingItem->update([
                     'quantity' => $existingItem->quantity + 1

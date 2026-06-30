@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('productimgs', function (Blueprint $table) {
+        Schema::create('admin_settings', function (Blueprint $table) {
             $table->id();
+            $table->string('key')->unique();
+            $table->longText('value')->nullable();
+            $table->string('group')->default('general'); // general, email, payment, etc.
             $table->timestamps();
-            $table->string('image')->nullable();
+            
+            $table->index('key');
+            $table->index('group');
         });
     }
 
@@ -23,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('productimgs');
+        Schema::dropIfExists('admin_settings');
     }
 };
